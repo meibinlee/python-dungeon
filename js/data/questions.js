@@ -1,15 +1,16 @@
-// answer is a ZERO-BASED choice index (0, 1, 2, or 3). Keep ids unique.
+// answer: ZERO-BASED choice index. explanation: feedback shown after answering.
+// Reviewed against ../python-mini-game/src/questions.js; use distinct tasks/examples.
 export const QUESTIONS = [
-  { id:'s1-q1', stage:1, question:'화면에 문자를 출력하는 명령은?', code:'', choices:['input()','print()','int()','if'], answer:1 },
-  { id:'s1-q2', stage:1, question:'Enter age: 에 14를 입력하면 출력되는 값은?', code:'age = int(input("Enter age: "))\nprint(age + 1)', choices:['14','141','15','Enter age:'], answer:2 },
-  { id:'s1-q3', stage:1, question:'다음 코드의 출력 결과는?', code:'# Set the score\nscore = 3\nscore = score + 2\nprint(score)', choices:['3','2','32','5'], answer:3 },
-  { id:'s2-q1', stage:2, question:'다음 코드의 출력 결과는?', code:'print(7 // 2, 7 % 2)', choices:['3 1','3.5 0','2 7','1 3'], answer:0 },
-  { id:'s2-q2', stage:2, question:'다음 코드의 출력 결과는?', code:'print("Go" * 2 + "!")', choices:['Go2!','Go Go!','GoGo!','Go!Go!'], answer:2 },
-  { id:'s2-q3', stage:2, question:'다음 코드의 출력 결과는?', code:'age = 14\nprint(age >= 13 and age < 16)', choices:['False','True','14','13'], answer:1 },
-  { id:'s3-q1', stage:3, question:'다음 코드의 출력 결과는?', code:'score = 80\nif score >= 90:\n    print("A")\nelif score >= 70:\n    print("B")\nelse:\n    print("C")', choices:['A','C','B','A B'], answer:2 },
-  { id:'s3-q2', stage:3, question:'모든 if / elif 조건이 거짓일 때 실행되는 부분은?', code:'', choices:['if','elif','while','else'], answer:3 },
-  { id:'s3-q3', stage:3, question:'다음 코드의 출력 결과는?', code:'number = 6\nif number % 2 == 0:\n    print("Even")\nelse:\n    print("Odd")', choices:['Even','Odd','6','True'], answer:0 },
-  { id:'s4-q1', stage:4, question:'다음 코드에서 Go는 몇 번 출력될까요?', code:'for i in range(3):\n    print("Go")', choices:['2번','3번','4번','0번'], answer:1 },
-  { id:'s4-q2', stage:4, question:'다음 코드의 출력 결과는? (공백은 줄바꿈을 뜻함)', code:'count = 1\nwhile count <= 3:\n    print(count)\n    count = count + 1', choices:['0 1 2','1 2','1 2 3','1 2 3 4'], answer:2 },
-  { id:'s4-q3', stage:4, question:'조건이 참인 동안 반복하는 명령은?', code:'', choices:['while','if','else','print'], answer:0 }
+  { id:'s1-q1', stage:1, question:'플레이어 번호를 저장할 변수 이름으로 사용할 수 있는 것은?', code:'', choices:['2player','player-name','player_2','for'], answer:2, explanation:'변수 이름은 숫자로 시작할 수 없고 하이픈(-)을 쓸 수 없습니다. for는 예약어입니다. player_2는 사용할 수 있습니다.' },
+  { id:'s1-q2', stage:1, question:'Enter boxes: 에 4를 입력했습니다. 마지막 출력 줄은?', code:'boxes = int(input("Enter boxes: "))\nprint(boxes * 6)', choices:['46','24','10','444444'], answer:1, explanation:'입력한 "4"를 int로 정수 4로 바꿉니다. 4 × 6은 24입니다. 입력 안내 문구는 마지막 출력 줄에 포함하지 않습니다.' },
+  { id:'s1-q3', stage:1, question:'따옴표 안의 #도 주석일까요? 이 코드가 출력하는 내용은?', code:'print("# checkpoint")', choices:['checkpoint','아무것도 출력되지 않는다','# checkpoint','오류가 발생한다'], answer:2, explanation:'따옴표 안의 #은 문자열의 일부입니다. # checkpoint 전체가 출력됩니다.' },
+  { id:'s2-q1', stage:2, question:'던전 표지판에 출력될 문자열은?', code:'print("HP:" + "3" * 2)', choices:['HP:6','HP:3 3','HP:32','HP:33'], answer:3, explanation:'"3" * 2는 "33"입니다. 앞의 "HP:"와 이어 붙여 HP:33을 출력합니다.' },
+  { id:'s2-q2', stage:2, question:'남은 이동 거리를 /로 계산하면 어떤 값이 출력될까요?', code:'steps = 18\nprint((steps - 6) / 4)', choices:['3.0','3','4.5','12'], answer:0, explanation:'괄호 안에서 18 - 6 = 12를 먼저 계산합니다. Python의 /는 실수 나눗셈이므로 출력은 3.0입니다.' },
+  { id:'s2-q3', stage:2, question:'열쇠와 에너지가 모두 있어야 True가 되도록 빈칸에 넣을 연산자는?', code:'keys = 1\nenergy = 0\nprint(keys > 0 ___ energy > 0)', choices:['or','and','+','=='], answer:1, explanation:'두 조건이 모두 참이어야 할 때는 and를 씁니다. 현재는 에너지가 0이므로 and로 연결한 결과는 False입니다.' },
+  { id:'s3-q1', stage:3, question:'서로 독립된 두 if문입니다. 문을 열면 출력되는 두 줄은?', code:'keys = 2\nif keys >= 1:\n    print("Open")\nif keys >= 2:\n    print("Bonus")', choices:['Open','Bonus','Open\nBonus','아무것도 출력되지 않는다'], answer:2, explanation:'elif가 아닌 독립된 if문이므로 두 조건을 각각 검사합니다. 둘 다 참이라 Open 다음 줄에 Bonus를 출력합니다.' },
+  { id:'s3-q2', stage:3, question:'경계값 level = 5는 어느 길로 안내될까요?', code:'level = 5\nif level > 5:\n    print("Upper")\nelif level == 5:\n    print("Gate")\nelse:\n    print("Lower")', choices:['Gate','Upper','Lower','Upper\nGate'], answer:0, explanation:'5 > 5는 거짓이고 5 == 5는 참입니다. 따라서 elif의 Gate만 출력합니다.' },
+  { id:'s3-q3', stage:3, question:'들여쓰기가 없는 마지막 print는 언제 실행될까요? 실제 출력은?', code:'password = "open"\nif password != "open":\n    print("Retry")\nprint("Done")', choices:['Retry','Retry\nDone','아무것도 출력되지 않는다','Done'], answer:3, explanation:'조건이 거짓이라 Retry는 출력되지 않습니다. 마지막 print는 if 밖에 있으므로 Done을 출력합니다.' },
+  { id:'s4-q1', stage:4, question:'반복하면서 모은 코인의 최종 합계는?', code:'total = 0\nfor coin in range(1, 4):\n    total = total + coin\nprint(total)', choices:['3','10','6','4'], answer:2, explanation:'range(1, 4)는 1, 2, 3입니다. total에 더하면 0 + 1 + 2 + 3 = 6입니다.' },
+  { id:'s4-q2', stage:4, question:'에너지가 2씩 줄어듭니다. 반복 종료 후 남은 에너지는?', code:'energy = 5\nwhile energy > 1:\n    energy = energy - 2\nprint(energy)', choices:['0','1','-1','3'], answer:1, explanation:'에너지는 5 → 3 → 1로 변합니다. 1 > 1은 거짓이므로 종료 후 1을 출력합니다.' },
+  { id:'s4-q3', stage:4, question:'문자열을 for로 순회하면 어떤 두 줄이 출력될까요?', code:'for letter in "GO":\n    print(letter)', choices:['G\nO','GO','letter\nletter','0\n1'], answer:0, explanation:'문자열의 문자를 순서대로 하나씩 꺼냅니다. 먼저 G, 다음 줄에 O가 출력됩니다.' }
 ];

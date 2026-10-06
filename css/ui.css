@@ -11,4 +11,9 @@ button { border:2px solid #fff1a3; padding:13px 22px; background:var(--accent); 
 .choices { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:18px; }.choices button { text-align:left; background:#171b30; color:var(--text); border-color:#657298; box-shadow:0 3px #080b17; overflow-wrap:anywhere; }.choices button:hover:enabled { background:#353b59; border-color:var(--accent); }
 .feedback { white-space:pre-line; line-height:1.6; margin-top:16px; min-height:24px; color:var(--accent); }.feedback.wrong { color:#ff93a5; }#quiz-continue { margin-top:12px; }
 .result-panel h2 { font-size:clamp(26px,4vw,46px); color:var(--accent); white-space:pre-line; }.result-panel p:not(.eyebrow) { margin:20px 0; line-height:1.7; }
+.menu-actions { display:flex; justify-content:center; flex-wrap:wrap; gap:12px; margin-top:18px; }
+.choices button { display:flex; align-items:flex-start; gap:14px; }
+.choice-number { flex-shrink:0; }
+.choice-value { white-space:pre-wrap; }
+.start-panel > #start-button { margin-top:24px; }
 @media(max-width:700px), (max-height:600px) { .panel { padding:14px; }.eyebrow { margin-bottom:8px; font-size:10px; }.controls { margin:12px 0; gap:8px; }.controls > div { padding:8px; }.start-panel h2 { margin:8px 0; }.intro,.small { display:none; }button { padding:10px 14px; }.teacher-line { padding-bottom:8px; margin-bottom:8px; }.quiz-panel h2 { font-size:16px; }pre { font-size:13px; margin:8px 0; padding:8px; }.choices { gap:8px; margin-top:10px; }.feedback { margin-top:8px; } }

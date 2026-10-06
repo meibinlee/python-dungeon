@@ -7,4 +7,5 @@ canvas { display:block; width:100%; height:100%; image-rendering:pixelated; }
 .player-hud { font-size:clamp(12px,1.8vw,22px); font-weight:bold; }.player-hud span { color:#ff7e91; }
 .stage-hud { text-align:center; display:grid; gap:4px; font-size:clamp(10px,1.4vw,17px); }.stage-hud strong { color:var(--accent); font-size:12px; letter-spacing:2px; }
 footer b { color:var(--accent); }
+.pause-button { position:absolute; top:76px; right:16px; padding:8px 12px; font-size:12px; }
 @media(max-width:700px) { body { padding:6px; }.game-shell { width:100%; }.masthead > :last-child, footer > :last-child { display:none; }.hud { padding:6px 10px; min-height:44px; } }

@@ -5,7 +5,7 @@ import { Game } from './core/game.js';
 import { QuizSystem } from './systems/quiz.js';
 
 async function initialize() {
-  const ids = ['game','start-screen','start-button','loading-message','hud','p1-hp','p2-hp','stage-number','stage-name','result-screen','result-eyebrow','result-title','result-message','result-button'];
+  const ids = ['game','start-screen','start-button','loading-message','ready-screen','ready-start-button','ready-back-button','pause-screen','pause-button','resume-button','home-button','hud','p1-hp','p2-hp','stage-number','stage-name','result-screen','result-eyebrow','result-title','result-message','result-button'];
   const ui = Object.fromEntries(ids.map(id => [id,document.getElementById(id)]));
   try {
     const assets = new Assets();
@@ -17,8 +17,14 @@ async function initialize() {
     game = new Game(input,renderer, {
       onState(state) {
         ui['start-screen'].hidden = state !== 'START';
-        ui.hud.hidden = state === 'START';
+        ui['ready-screen'].hidden = state !== 'READY';
+        ui['pause-screen'].hidden = state !== 'PAUSED';
+        ui['pause-button'].hidden = state !== 'PLAYING';
+        ui.hud.hidden = state === 'START' || state === 'READY';
+        if (state !== 'QUIZ') quiz.hide();
         ui['result-screen'].hidden = state !== 'STAGE_CLEAR' && state !== 'GAME_CLEAR';
+        const focus = { START:'start-button', READY:'ready-start-button', PAUSED:'resume-button', PLAYING:'game' }[state];
+        if (focus) ui[focus].focus({ preventScroll:true });
       },
       onHud(players,stage) {
         for (const player of players) ui[`p${player.id}-hp`].textContent = player.hp ? '♥'.repeat(player.hp) + '♡'.repeat(player.maxHp-player.hp) : 'DOWN';
@@ -36,16 +42,22 @@ async function initialize() {
       }
     });
     ui['start-button'].disabled = false;
-    ui['start-button'].textContent = '2 PLAYER START';
-    ui['start-button'].addEventListener('click', () => {
+    ui['start-button'].textContent = '게임 시작';
+    ui['start-button'].addEventListener('click', () => game.showInstructions());
+    ui['ready-start-button'].addEventListener('click', () => {
       game.startGame();
       // Empty in MVP; optional assets never block play and are cached once.
       void assets.preload(LATER_ASSETS);
     });
+    ui['ready-back-button'].addEventListener('click', () => game.returnToStart());
+    ui['pause-button'].addEventListener('click', () => game.pauseGame());
+    ui['resume-button'].addEventListener('click', () => game.resumeGame());
+    ui['home-button'].addEventListener('click', () => game.returnToStart());
     ui['result-button'].addEventListener('click', () => {
-      if (game.state === 'GAME_CLEAR') game.startGame();
+      if (game.state === 'GAME_CLEAR') game.showInstructions();
       else if (game.state === 'STAGE_CLEAR') game.continueAfterStage();
     });
+    game.returnToStart();
   } catch (error) {
     console.error('Game initialization failed:',error);
     ui['loading-message'].textContent = '게임을 불러오지 못했습니다. 페이지를 새로고침해 주세요.';

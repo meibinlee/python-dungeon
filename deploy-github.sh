@@ -41,7 +41,7 @@ else
 fi
 
 # Explicit paths avoid uploading unrelated local files or credentials.
-git add index.html README.md AGENTS.md css js assets .nojekyll .gitignore deploy-github.sh
+git add index.html README.md AGENTS.md css js assets tests .nojekyll .gitignore deploy-github.sh
 if ! git diff --cached --quiet; then
   git -c "user.name=$quest_owner" \
     -c "user.email=$quest_user_id+$quest_owner@users.noreply.github.com" \

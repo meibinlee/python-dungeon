@@ -32,6 +32,7 @@ export class Renderer {
     ctx.drawImage(this.background,0,0);
     const image = this.assets.get(game.stages.current.background);
     if (image) ctx.drawImage(image,0,0,GAME_WIDTH,GAME_HEIGHT);
+    if (game.state === 'START' || game.state === 'READY') return;
     for (const monster of game.monsters) this.drawMonster(monster,game.stages.current.accent);
     for (const projectile of game.projectiles) {
       ctx.fillStyle = projectile.color; ctx.fillRect(Math.round(projectile.x),Math.round(projectile.y),projectile.width,projectile.height);

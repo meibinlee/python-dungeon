@@ -10,16 +10,39 @@ export class Game {
     this.players = [new Player(1,PLAYER_1_KEYS,'#6fc6ff',480,460), new Player(2,PLAYER_2_KEYS,'#ffd34e',760,460)];
     this.renderer.prepareBackground(this.stages.current);
     this.hudCache = '';
+    this.needsRender = true;
+    this.input.onPause = () => this.togglePause();
+    this.input.onInactive = () => this.pauseGame();
     this.loop = this.loop.bind(this);
     // Exactly one chain, created here; starting/replaying never creates another loop.
     requestAnimationFrame(this.loop);
   }
   setState(state) {
     this.state = state;
-    this.input.setEnabled(state === 'PLAYING');
+    this.lastTime = null;
+    this.needsRender = true;
+    this.input.setEnabled(state === 'PLAYING', state === 'PLAYING' || state === 'PAUSED');
     this.events.onState(state);
   }
   startGame() { this.stages.reset(); this.startStage(); }
+  showInstructions() {
+    if (this.state === 'START' || this.state === 'GAME_CLEAR') this.setState('READY');
+  }
+  returnToStart() {
+    this.stages.reset();
+    this.monsters = [];
+    this.projectiles = [];
+    this.players.forEach(player => player.reset());
+    this.restartNotice = 0;
+    this.renderer.prepareBackground(this.stages.current);
+    this.setState('START');
+  }
+  pauseGame() { if (this.state === 'PLAYING') this.setState('PAUSED'); }
+  resumeGame() { if (this.state === 'PAUSED') this.setState('PLAYING'); }
+  togglePause() {
+    if (this.state === 'PLAYING') this.pauseGame();
+    else if (this.state === 'PAUSED') this.resumeGame();
+  }
   startStage() {
     this.players.forEach(player => player.reset());
     this.projectiles = [];
@@ -75,7 +98,10 @@ export class Game {
     // Hidden tabs pause simulation and clear keys; dt also limits the resume frame.
     if (!document.hidden) {
       this.update(dt);
-      this.renderer.render(this);
+      if (this.state === 'PLAYING' || this.needsRender) {
+        this.renderer.render(this);
+        this.needsRender = false;
+      }
     }
     requestAnimationFrame(this.loop);
   }

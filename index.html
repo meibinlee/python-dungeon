@@ -14,25 +14,40 @@
   <main class="game-shell">
     <header class="masthead"><span>CODE QUEST</span><span>CO-OP CODING ADVENTURE · 2 PLAYERS</span></header>
     <section class="game-wrapper" aria-label="2인 협동 코딩 던전">
-      <canvas id="game" width="1280" height="720" aria-label="게임 전투 화면"></canvas>
+      <canvas id="game" width="1280" height="720" tabindex="0" aria-label="게임 전투 화면. Esc로 일시정지"></canvas>
       <div id="hud" class="hud" hidden>
         <div class="player-hud blue">P1 <span id="p1-hp"></span></div>
         <div class="stage-hud"><strong id="stage-number"></strong><span id="stage-name"></span></div>
         <div class="player-hud yellow">P2 <span id="p2-hp"></span></div>
       </div>
+      <button id="pause-button" class="pause-button" hidden>일시정지 · Esc</button>
       <div id="start-screen" class="overlay">
         <section class="panel start-panel" aria-labelledby="title">
           <p class="eyebrow">TWO HEROES. ONE KEYBOARD.</p>
           <h1 id="title">CODE <span>QUEST</span></h1>
           <h2>명빈T의 코딩 던전</h2>
           <p class="intro">코드 몬스터를 물리치고, 함께 문제를 풀어 던전을 탈출하세요!</p>
+          <button id="start-button" disabled>LOADING...</button>
+          <p id="loading-message" role="status"></p>
+        </section>
+      </div>
+      <div id="ready-screen" class="overlay" hidden>
+        <section class="panel start-panel" role="dialog" aria-modal="true" aria-labelledby="ready-title">
+          <h2 id="ready-title">두 플레이어, 준비됐나요?</h2>
           <div id="instructions" class="controls">
             <div class="blue"><strong>PLAYER 1</strong><p><kbd>W A S D</kbd> : MOVE</p><p><kbd>F</kbd> : ATTACK</p></div>
             <div class="yellow"><strong>PLAYER 2</strong><p><kbd>↑ ← ↓ →</kbd> : MOVE</p><p><kbd>L</kbd> : ATTACK</p></div>
           </div>
-          <button id="start-button" disabled>LOADING...</button>
-          <p class="small">이동한 방향으로 공격 · 공격 키를 누르고 있어도 OK</p>
-          <p id="loading-message" role="status"></p>
+          <p>이동한 방향으로 공격합니다. 공격 키를 누르고 있어도 됩니다.</p>
+          <p>Esc 또는 일시정지 버튼으로 전투를 멈출 수 있습니다.</p>
+          <div class="menu-actions"><button id="ready-start-button">2 PLAYER START</button><button id="ready-back-button">타이틀로</button></div>
+        </section>
+      </div>
+      <div id="pause-screen" class="overlay" hidden>
+        <section class="panel result-panel" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+          <h2 id="pause-title">PAUSED</h2>
+          <p>전투와 부활 시간이 멈췄습니다.<br>계속하기 또는 Esc를 누르면 이어서 플레이합니다.</p>
+          <div class="menu-actions"><button id="resume-button">계속하기</button><button id="home-button">타이틀로 · 진행 초기화</button></div>
         </section>
       </div>
       <div id="quiz-screen" class="overlay" hidden>
@@ -53,7 +68,7 @@
         </section>
       </div>
     </section>
-    <footer><span>WASD + F <b> / </b> 방향키 + L</span><span>4 STAGES · 3 FINAL QUESTIONS · 함께 도전!</span></footer>
+    <footer><span>WASD + F <b> / </b> 방향키 + L <b> / </b> Esc 일시정지</span><span>4 STAGES · 3 FINAL QUESTIONS · 함께 도전!</span></footer>
     <noscript>이 게임을 실행하려면 브라우저의 JavaScript를 활성화하세요.</noscript>
   </main>
   <script type="module" src="./js/main.js"></script>
