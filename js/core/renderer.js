@@ -1,4 +1,4 @@
-import { GAME_WIDTH, GAME_HEIGHT, ARENA, DIRECTIONS, DAMAGE_NUMBER_TIME } from './config.js';
+import { GAME_WIDTH, GAME_HEIGHT, ARENA, DIRECTIONS, DAMAGE_NUMBER_TIME, CLASSES } from './config.js';
 
 const PIXEL_FONT = '"Galmuri11", monospace';
 
@@ -8,12 +8,14 @@ export class Renderer {
     this.ctx.imageSmoothingEnabled = false;
     this.assets = assets;
     this.background = null;
+    this.heroSprites = new Map();
   }
   prepareBackground(stage) {
     // Cache static floor artwork once per stage; active gameplay still uses one visible Canvas.
     const background = document.createElement('canvas');
-    background.width = GAME_WIDTH; background.height = GAME_HEIGHT;
+    background.width = GAME_WIDTH/4; background.height = GAME_HEIGHT/4;
     const ctx = background.getContext('2d');
+    ctx.scale(.25,.25);
     ctx.fillStyle = stage.color; ctx.fillRect(0,0,GAME_WIDTH,GAME_HEIGHT);
     const polygon = (color,points) => {
       ctx.fillStyle = color; ctx.beginPath();
@@ -72,11 +74,16 @@ export class Renderer {
     // Perimeter stones make the actual movement boundary clear.
     ctx.fillStyle = stage.id===1 ? '#4b8052' : '#656283';
     for(let x=ARENA.left;x<ARENA.right;x+=32)ctx.fillRect(x,ARENA.bottom+8,28,12);
+    // Small raster tiles add texture without frame-time drawing or network assets.
+    for (let i=0;i<500;i++) {
+      const x=32+((i*71)%1180),y=196+((i*113)%476);
+      ctx.fillStyle=i%3?'#ffffff12':'#192d3920';ctx.fillRect(Math.floor(x/4)*4,Math.floor(y/4)*4,8,4);
+    }
     this.background = background;
   }
   render(game) {
     const ctx = this.ctx;
-    ctx.drawImage(this.background,0,0);
+    ctx.drawImage(this.background,0,0,GAME_WIDTH,GAME_HEIGHT);
     const image = this.assets.get(game.stages.current.background);
     if (image) ctx.drawImage(image,0,0,GAME_WIDTH,GAME_HEIGHT);
     if (game.state === 'START' || game.state === 'READY') return;
@@ -85,10 +92,7 @@ export class Renderer {
       if (monster.isBoss) this.drawBoss(monster);
       else this.drawMonster(monster,game.stages.current.accent);
     }
-    for (const projectile of game.projectiles) {
-      ctx.fillStyle = projectile.color; ctx.fillRect(Math.round(projectile.x),Math.round(projectile.y),projectile.width,projectile.height);
-      ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(projectile.x)+4,Math.round(projectile.y)+4,6,6);
-    }
+    for (const projectile of game.projectiles) this.drawAttack(projectile);
     for (const player of game.players) this.drawPlayer(player);
     for (const effect of game.damageEffects) this.drawDamageNumber(effect);
     if (game.state === 'QUIZ' || game.state === 'STAGE_CLEAR') this.drawTeacher();
@@ -106,46 +110,66 @@ export class Renderer {
       ctx.fillStyle='#9c3844';ctx.fillText(`P${player.id} DOWN`,x+20,y);
       ctx.fillText(`${Math.ceil(player.respawnTime)}s`,x+20,y+24);return;
     }
-    const blue=player.id===1, outline='#514139', hair=blue?'#735039':'#a96735';
-    const outfit=blue?'#479dcc':'#efaa48', shade=blue?'#326b9b':'#bd7837';
-    const stride=player.moving?(Math.floor(player.walkTime*8)%2?2:-2):0;
-    const rect=(color,dx,dy,w,h)=>{ctx.fillStyle=color;ctx.fillRect(x+dx,y+dy,w,h);};
-    rect('#38452d55',-4,35,48,10);
+    const stride=player.moving ? (Math.floor(player.walkTime*8)%2 ? 2 : -2) : 0;
+    ctx.fillStyle='#24382955';ctx.fillRect(x-4,y+36,48,8);
     ctx.globalAlpha=player.invincibleTime>0&&Math.floor(player.invincibleTime*12)%2===0?.65:1;
-    // Big head, tiny body; original two adventurers drawn on a 2px pixel grid.
-    rect(shade,0,17,40,18);rect(outline,7,30,12,10);rect(outline,23,30,12,10);
-    rect('#725441',9,32+stride,8,8);rect('#725441',25,32-stride,8,8);
-    rect('#fff3d9',9,32+stride,8,3);rect('#fff3d9',25,32-stride,8,3);
-    rect(outline,5,13,30,20);rect(outfit,7,14,26,16);
-    rect('#fff2cd',16,17,8,6);rect('#f4ccad',0,18,7,9);rect('#f4ccad',33,18,7,9);
-    rect(outline,-2,-14,44,31);rect(outline,2,-18,36,37);
-    rect(hair,0,-14,40,29);rect('#ffe0ba',4,-7,32,24);rect('#f5c69f',2,1,4,11);rect('#f5c69f',34,1,4,11);
-    // Fringe and rounded cheek silhouette.
-    rect(hair,2,-12,36,8);rect(hair,4,-5,7,6);rect(hair,29,-5,7,6);
-    rect('#fff7e3',10,-1,7,10);rect('#fff7e3',24,-1,7,10);
-    const eyeShift=player.direction==='left'?-1:player.direction==='right'?1:0;
-    rect('#413733',11+eyeShift,0,5,9);rect('#413733',25+eyeShift,0,5,9);
-    rect('#ffffff',12+eyeShift,0,2,3);rect('#ffffff',26+eyeShift,0,2,3);
-    rect('#efa197',6,9,6,3);rect('#efa197',29,9,6,3);
-    rect('#ad715f',18,11,4,2);rect('#fff1d9',4,15,32,3);
-    if(blue) {
-      rect(outline,-2,-20,42,9);rect('#3b83b5',0,-22,38,10);rect('#77c5e4',6,-24,25,8);
-      rect('#f7dc88',29,-20,6,6);rect('#ffedb8',31,-22,2,10);
-      rect('#ddebfa',10,16,20,4);rect('#85c9e6',24,18,6,9);
-    } else {
-      rect(outline,0,-22,10,10);rect(outline,30,-22,10,10);
-      rect('#eaaa4e',2,-22,6,8);rect('#eaaa4e',32,-22,6,8);
-      rect('#f7c86f',2,-15,36,6);rect('#ffdf93',8,-18,24,6);
-      rect('#fff4d7',12,18,16,5);rect('#c57c3d',18,24,4,3);
-    }
-    if(player.hurtTime>0) {ctx.strokeStyle='#e96b6f';ctx.lineWidth=3;ctx.strokeRect(x-5,y-26,50,68);}
+    ctx.drawImage(this.getHeroSprite(player.classType,player.id),x-12,y-32+stride,64,80);
+    if(player.hurtTime>0) {ctx.fillStyle='#ff9a8c';ctx.fillRect(x-6,y-24,4,12);ctx.fillRect(x+42,y+10,4,12);}
     ctx.globalAlpha=1;
     const [dx,dy]=DIRECTIONS[player.direction];
-    rect('#fff7d5',17+dx*24,12+dy*28,6,6);
-    ctx.strokeStyle='#fff9e7';ctx.lineWidth=3;
+    ctx.fillStyle='#fff7d5';ctx.fillRect(x+17+dx*24,y+12+dy*28,6,6);
+    ctx.textAlign='center';ctx.font=`16px ${PIXEL_FONT}`;ctx.strokeStyle='#fff9e7';ctx.lineWidth=3;
     const label=`P${player.id} ${player.nickname}${player.attackMultiplier>1?' ×2':''}`;
-    ctx.strokeText(label,x+20,y-33);ctx.fillStyle=blue?'#215981':'#7d4c1c';ctx.fillText(label,x+20,y-33);
-    if(player.attackMultiplier>1) {ctx.strokeStyle='#ffe586';ctx.lineWidth=2;ctx.strokeRect(x-6,y-27,52,70);}
+    ctx.strokeText(label,x+20,y-38);ctx.fillStyle=player.id===1?'#215981':'#7d4c1c';ctx.fillText(label,x+20,y-38);
+  }
+  getHeroSprite(type,id) {
+    const key=`${type}:${id}`;
+    if(this.heroSprites.has(key)) return this.heroSprites.get(key);
+    const sprite=document.createElement('canvas');sprite.width=16;sprite.height=20;
+    const ctx=sprite.getContext('2d');
+    const palette={o:'#34313e',h:'#6c493a',s:'#ffdbb5',e:'#292d3c',w:'#fff5d7',c:id===1?'#529dc8':'#e5a34a',d:id===1?'#305b91':'#a76531',r:'#e99791',g:'#d9e4e6',p:'#9275bc'};
+    const rows=[
+      '................','................','....ooooooo.....','...ohhhhhhho....',
+      '..ohhhhhhhhho...','..ohsssssssho...','..ossssssssso...',
+      '..osweesweeso...','..osweesweeso...','..ossssssssso...',
+      '...osrssrso.....','....osssso......','...oodwddoo.....',
+      '..osccwccsso....','..oscccccso.....','...odcccdo......',
+      '....odddo.......','....ow.wo.......','...odd.ddo......','...ooo.ooo......'
+    ];
+    rows.forEach((row,y)=>[...row].forEach((pixel,x)=>{if(palette[pixel]){ctx.fillStyle=palette[pixel];ctx.fillRect(x,y,1,1);}}));
+    const rect=(c,x,y,w,h)=>{ctx.fillStyle=c;ctx.fillRect(x,y,w,h);};
+    if(type==='warrior') {
+      rect('#34313e',3,2,10,3);rect('#aab8c8',4,2,8,2);rect('#e9f0e9',5,2,4,1);rect(palette.c,7,0,3,2);
+      rect('#34313e',13,10,2,8);rect('#e4edf1',13,9,1,6);rect('#e8c76c',12,14,3,1);rect('#79573e',13,15,1,3);
+    } else if(type==='archer') {
+      rect('#355c4b',3,2,10,3);rect('#69916a',4,2,8,2);rect('#d2c47b',11,0,1,3);
+      rect('#b8864f',14,11,1,6);rect('#e9c77b',13,10,1,1);rect('#e9c77b',13,17,1,1);rect('#fff5d7',13,11,1,6);
+      rect('#6f7852',4,13,2,3);
+    } else {
+      rect('#34313e',2,4,12,1);rect('#765d99',3,3,10,1);rect('#9275bc',4,2,8,1);rect('#9275bc',6,1,5,1);rect('#b89bd6',8,0,2,1);rect('#f0d58a',9,3,1,1);
+      rect('#8e6384',13,11,1,7);rect('#dbe0ff',12,9,3,3);rect('#aa8adb',13,10,1,1);
+    }
+    this.heroSprites.set(key,sprite);return sprite;
+  }
+  drawPreview(canvas,type,id) {
+    const ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
+    ctx.clearRect(0,0,96,96);ctx.drawImage(this.getHeroSprite(type,id),16,4,64,80);
+  }
+  drawAttack(attack) {
+    const ctx=this.ctx,x=Math.round(attack.x/4)*4,y=Math.round(attack.y/4)*4;
+    const horizontal=attack.direction==='left'||attack.direction==='right';
+    if(attack.classType==='warrior') {
+      ctx.fillStyle='#fff4bd';
+      if(horizontal) {ctx.fillRect(x+20,y,12,attack.height);ctx.fillRect(x+36,y+8,8,attack.height-16);ctx.fillRect(x+48,y+20,8,attack.height-40);}
+      else {ctx.fillRect(x,y+20,attack.width,12);ctx.fillRect(x+8,y+36,attack.width-16,8);ctx.fillRect(x+20,y+48,attack.width-40,8);}
+      ctx.fillStyle='#d6e7ee';if(horizontal)ctx.fillRect(x+8,y+28,40,8);else ctx.fillRect(x+28,y+8,8,40);
+    } else if(attack.classType==='archer') {
+      ctx.fillStyle='#ad7e45';ctx.fillRect(x,y,horizontal?24:4,horizontal?4:24);
+      ctx.fillStyle='#fff0c3';ctx.fillRect(x+(attack.direction==='right'?20:0),y+(attack.direction==='down'?20:0),8,8);
+    } else {
+      ctx.fillStyle='#6657b0';ctx.fillRect(x+4,y,12,20);ctx.fillRect(x,y+4,20,12);
+      ctx.fillStyle='#b3d9ff';ctx.fillRect(x+4,y+4,12,12);ctx.fillStyle='#fff5df';ctx.fillRect(x+8,y+4,4,8);
+    }
   }
   drawHealthBar(entity,x,y,width,height=10) {
     const ctx=this.ctx;
@@ -213,12 +237,12 @@ export class Renderer {
       ctx.strokeStyle='#ffec8e';ctx.lineWidth=10;ctx.beginPath();ctx.moveTo(x+80,y+56);ctx.lineTo(x+80+boss.chargeX*220,y+56+boss.chargeY*220);ctx.stroke();
     }
     ctx.fillStyle='#333057';ctx.fillRect(x-8,y+100,176,20);
-    ctx.fillStyle=boss.hitTime>0?'#fff5bb':boss.phase==='WINDUP'?'#ee927f':'#9e83ca';
+    ctx.fillStyle=boss.hitTime>0?'#fff5bb':boss.phase==='WINDUP'?'#ee927f':boss.tint;
     ctx.fillRect(x,y+16,160,96);ctx.fillRect(x+16,y,128,112);
     ctx.fillStyle='#efd6a4';ctx.fillRect(x+24,y-12,24,28);ctx.fillRect(x+112,y-12,24,28);ctx.fillRect(x+24,y+12,112,8);
     ctx.fillStyle='#302846';ctx.fillRect(x+20,y+32,120,64);
     ctx.fillStyle='#ffe79d';ctx.fillRect(x+40,y+44,20,12);ctx.fillRect(x+100,y+44,20,12);
-    ctx.font=`26px ${PIXEL_FONT}`;ctx.textAlign='center';ctx.fillText('{ ∞ }',x+80,y+85);
+    ctx.font=`26px ${PIXEL_FONT}`;ctx.textAlign='center';ctx.fillText(boss.weakness==='warrior'?'[ ROOT ]':boss.weakness==='mage'?'[ + − ]':boss.weakness==='archer'?'[ IF ]':'{ ∞ }',x+80,y+85);
     this.drawHealthBar(boss,x-12,y-24,184,12);
     ctx.font=`18px ${PIXEL_FONT}`;ctx.fillStyle='#fff8d8';ctx.fillText(boss.phase==='WINDUP'?'돌진 준비! 옆으로 피하세요!':boss.label,x+80,y-40);
   }

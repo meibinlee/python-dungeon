@@ -1,12 +1,17 @@
-import { ITEM_SIZE, POWER_MULTIPLIER, DEFENSE_BONUS_HP } from '../core/config.js';
+import { ITEM_SIZE, POWER_MULTIPLIER, DEFENSE_BONUS_HP, ARENA } from '../core/config.js';
+import { shuffled } from '../core/utils.js';
 import { overlaps } from './collision.js';
 
+// Separate shuffled grid cells guarantee bounded, distinct placements away from spawns.
 export function spawnItems() {
-  return [
-    ['attack',350,380],['attack',900,380],
-    ['defense',380,560],['defense',840,560],
-    ['heal',500,280],['heal',740,280]
-  ].map(([type,x,y]) => ({ type, x, y, width:ITEM_SIZE, height:ITEM_SIZE, active:true }));
+  const cells=[];
+  for (const x of [240,420,600,780,960]) for (const y of [260,370,550]) cells.push([x,y]);
+  return shuffled(cells).slice(0,3).map(([x,y],index) => ({
+    type:['attack','defense','heal'][index],
+    x:Math.min(ARENA.right-ITEM_SIZE,x+Math.floor(Math.random()*33)-16),
+    y:Math.min(ARENA.bottom-ITEM_SIZE-36,y+Math.floor(Math.random()*33)-16),
+    width:ITEM_SIZE,height:ITEM_SIZE,active:true
+  }));
 }
 export function collectItems(players,items) {
   for (const item of items) {

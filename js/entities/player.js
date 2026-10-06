@@ -1,16 +1,18 @@
-import { ARENA, PLAYER_SPEED, PLAYER_MAX_HP, PLAYER_SIZE, ATTACK_COOLDOWN, INVINCIBLE_TIME, RESPAWN_TIME, LEVEL_SPEED_BONUS, LEVEL_COOLDOWN_BONUS } from '../core/config.js';
+import { ARENA, PLAYER_SPEED, PLAYER_MAX_HP, PLAYER_SIZE, ATTACK_COOLDOWN, INVINCIBLE_TIME, RESPAWN_TIME, LEVEL_SPEED_BONUS, LEVEL_COOLDOWN_BONUS, CLASSES } from '../core/config.js';
 import { clamp } from '../core/utils.js';
 import { Projectile } from './projectile.js';
 
 export class Player {
   constructor(id, keys, color, x, y) {
     Object.assign(this, { id, keys, color, spawnX:x, spawnY:y, width:PLAYER_SIZE, height:PLAYER_SIZE, speed:PLAYER_SPEED, maxHp:PLAYER_MAX_HP });
+    this.classType = 'mage';
     this.reset();
     this.nickname = `Player ${id}`;
     this.setLevel(1);
     this.resetStats();
   }
-  resetStats() { this.kills=0; this.bossKills=0; this.correctAnswers=0; }
+  setClass(type) { if (CLASSES[type]) this.classType = type; }
+  resetStats() { this.kills=0; this.bossKills=0; }
   setLevel(level) {
     this.level = level;
     this.speed = PLAYER_SPEED + (level-1)*LEVEL_SPEED_BONUS;

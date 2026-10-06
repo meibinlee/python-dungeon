@@ -6,6 +6,8 @@ export class Boss extends Monster {
   constructor(definition) {
     super(definition.name, 560, 205, definition.speed, definition.hp);
     Object.assign(this, { isBoss:true, width:160, height:112, phase:'CHASE', timer:BOSS_CHARGE_INTERVAL, chargeX:0, chargeY:1 });
+    this.weakness = definition.weakness || null;
+    this.tint = definition.tint || '#9e83ca';
     this.chargeInterval = definition.chargeInterval || BOSS_CHARGE_INTERVAL;
     this.chargeSpeed = definition.chargeSpeed || BOSS_CHARGE_SPEED;
     this.timer = this.chargeInterval;

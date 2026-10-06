@@ -20,9 +20,6 @@ export const PLAYER_SIZE = 40;
 export const ATTACK_COOLDOWN = 0.3;
 export const INVINCIBLE_TIME = 1;
 export const RESPAWN_TIME = 3;
-export const PROJECTILE_SPEED = 620;
-export const PROJECTILE_SIZE = 14;
-export const PROJECTILE_LIFETIME = 1.8;
 export const MAX_PROJECTILES = 20;
 export const MAX_MONSTERS = 7;
 export const MAX_DELTA_TIME = 0.05;
@@ -34,3 +31,10 @@ export const MAX_DAMAGE_EFFECTS = 24;
 export const PLAYER_1_KEYS = { up:'KeyW', down:'KeyS', left:'KeyA', right:'KeyD', attack:'KeyF' };
 export const PLAYER_2_KEYS = { up:'ArrowUp', down:'ArrowDown', left:'ArrowLeft', right:'ArrowRight', attack:'KeyL' };
 export const DIRECTIONS = { up:[0,-1], down:[0,1], left:[-1,0], right:[1,0] };
+
+export const CLASSES = {
+  warrior: { name:'전사', damage:2, speed:0, lifetime:0.16, size:72 },
+  archer: { name:'궁수', damage:1, speed:800, lifetime:1.3, size:14 },
+  mage: { name:'마법사', damage:1, speed:500, lifetime:1.8, size:20 }
+};
+export const BOSS_WEAKNESS_MULTIPLIER = 3;

@@ -76,7 +76,7 @@ function key(code,down=true,extra={}) { let prevented=false; windowEvents.get(do
    for(const direction of ['up','down','left','right']) {
      const before={x:player.x,y:player.y};key(player.keys[direction]);player.update(.05,input);input.clear();assert.equal(player.direction,direction);
      const [dx,dy]=config.DIRECTIONS[direction];assert.equal(Math.sign(player.x-before.x),dx);assert.equal(Math.sign(player.y-before.y),dy);
-     player.attackCooldown=0;const shot=player.attack();assert.equal(shot.velocityX,dx*config.PROJECTILE_SPEED);assert.equal(shot.velocityY,dy*config.PROJECTILE_SPEED);
+     player.attackCooldown=0;const shot=player.attack();assert.equal(shot.velocityX,dx*config.CLASSES[player.classType].speed);assert.equal(shot.velocityY,dy*config.CLASSES[player.classType].speed);
    }
  });
  check('nearest living player monster AI',()=>{
@@ -86,7 +86,7 @@ function key(code,down=true,extra={}) { let prevented=false; windowEvents.get(do
  check('AABB projectile damage and dead monster cleanup',()=>{
    game.projectiles=[];const m=new Monster('test',500,300,0,1);game.monsters=[m];
    const p=new Projectile(game.players[0]);p.x=510;p.y=310;p.velocityX=0;p.velocityY=0;game.projectiles=[p];game.update(.01);
-   assert.equal(m.hp,0);assert.equal(game.monsters.length,0);assert.equal(game.projectiles.length,0);assert.equal(game.state,'QUIZ');
+   assert.equal(m.hp,0);assert.equal(game.monsters.length,1);assert.equal(game.projectiles.length,0);assert.equal(game.battlePhase,'BOSS');game.monsters[0].takeDamage(1000);game.update(0);assert.equal(game.state,'QUIZ');
  });
  check('quiz freezes movement and damage; non-game shortcuts allowed',()=>{
    const p=game.players[0];const {x,y,hp}=p;assert.equal(key('KeyW'),false);game.update(1);assert.equal(p.x,x);assert.equal(p.y,y);assert.equal(p.hp,hp);
@@ -124,7 +124,7 @@ function key(code,down=true,extra={}) { let prevented=false; windowEvents.get(do
    for(let stage=1;stage<=4;stage++){
      assert.equal(game.stages.current.id,stage);assert.ok(game.monsters.length>=4&&game.monsters.length<=7);
      game.monsters=[];game.update(.01);
-     if(stage===4){assert.equal(game.state,'PLAYING');assert.equal(game.battlePhase,'BOSS');assert.equal(game.monsters.length,1);const boss=game.monsters[0];boss.hp=1;const shot=new Projectile(game.players[0]);shot.x=boss.x+20;shot.y=boss.y+20;shot.velocityX=0;shot.velocityY=0;game.projectiles=[shot];game.update(.01);}
+     if(game.stages.current.boss){assert.equal(game.state,'PLAYING');assert.equal(game.battlePhase,'BOSS');assert.equal(game.monsters.length,1);const boss=game.monsters[0];boss.hp=1;const shot=new Projectile(game.players[0]);shot.x=boss.x+20;shot.y=boss.y+20;shot.velocityX=0;shot.velocityY=0;game.projectiles=[shot];game.update(.01);}
      assert.equal(game.state,'QUIZ');assert.equal(quiz.question.stage,stage);
      quiz.checkAnswer(quiz.question.answer);quiz.continueQuiz();assert.equal(game.state,'STAGE_CLEAR');game.continueAfterStage();
    }
@@ -161,7 +161,7 @@ function key(code,down=true,extra={}) { let prevented=false; windowEvents.get(do
    windowEvents.get('blur')();assert.equal(game.state,'PAUSED');game.resumeGame();doc.hidden=true;documentEvents.get('visibilitychange')();assert.equal(game.state,'PAUSED');doc.hidden=false;documentEvents.get('visibilitychange')();assert.equal(game.state,'PAUSED');game.resumeGame();
  });
  check('Esc cannot skip quiz or interfere with browser shortcuts',()=>{
-   game.monsters=[];game.update(.01);assert.equal(game.state,'QUIZ');assert.equal(key('Escape'),false);game.resumeGame();assert.equal(game.state,'QUIZ');game.startGame();assert.equal(key('Escape',true,{ctrlKey:true}),false);assert.equal(game.state,'PLAYING');
+   game.monsters=[];game.update(.01);game.monsters[0].takeDamage(1000);game.update(0);assert.equal(game.state,'QUIZ');assert.equal(key('Escape'),false);game.resumeGame();assert.equal(game.state,'QUIZ');game.startGame();assert.equal(key('Escape',true,{ctrlKey:true}),false);assert.equal(game.state,'PLAYING');
  });
  check('paused/menu frames do not redraw static Canvas; resume retains one loop',()=>{
    let renders=0;const render=renderer.render.bind(renderer);renderer.render=g=>{renders++;render(g);};
@@ -182,24 +182,23 @@ function key(code,down=true,extra={}) { let prevented=false; windowEvents.get(do
    assert.throws(()=>validateQuestions(QUESTIONS.filter(q=>q.stage!==4)));
  });
 
- check('swords double attack damage once, leave second sword for teammate',()=>{
-   game.startGame();game.monsters.forEach(m=>m.speed=0);const [p1,p2]=game.players;let crystal=game.items.find(item=>item.type==='attack');p1.x=crystal.x;p1.y=crystal.y;game.update(0);assert.equal(p1.attackMultiplier,2);assert.equal(new Projectile(p1).damage,2);assert.equal(game.items.filter(item=>item.type==='attack').length,1);
-   crystal=game.items.find(item=>item.type==='attack');p1.x=crystal.x;p1.y=crystal.y;game.update(0);assert.equal(game.items.filter(item=>item.type==='attack').length,1);assert.equal(p1.attackMultiplier,2);p1.x=300;p2.x=crystal.x;p2.y=crystal.y;game.update(0);assert.equal(p2.attackMultiplier,2);assert.equal(game.items.filter(item=>item.type==='attack').length,0);
+ check('one random sword boosts only its collector',()=>{
+   game.startGame();game.monsters.forEach(m=>m.speed=0);const [p1,p2]=game.players;const sword=game.items.find(i=>i.type==='attack');p1.x=sword.x;p1.y=sword.y;game.update(0);assert.equal(p1.attackMultiplier,2);assert.equal(new Projectile(p1).damage,2);assert.equal(p2.attackMultiplier,1);assert.equal(game.items.filter(i=>i.type==='attack').length,0);
  });
  check('DOWN cannot pick up; respawn keeps power; new/restarted stages reset it',()=>{
-   game.startGame();const p=game.players[0],crystal=game.items[0];p.x=crystal.x;p.y=crystal.y;p.invincibleTime=0;p.takeDamage(3);game.update(0);assert.equal(game.items.length,6);assert.equal(p.attackMultiplier,1);
+   game.startGame();const p=game.players[0],crystal=game.items[0];p.x=crystal.x;p.y=crystal.y;p.invincibleTime=0;p.takeDamage(3);game.update(0);assert.equal(game.items.length,3);assert.equal(p.attackMultiplier,1);
    p.reset();p.x=crystal.x;p.y=crystal.y;game.update(0);assert.equal(p.attackMultiplier,2);p.invincibleTime=0;p.takeDamage(3);p.update(3.1,input);assert.equal(p.active,true);assert.equal(p.attackMultiplier,2);
-   game.restartStage();assert.ok(game.players.every(player=>player.attackMultiplier===1));assert.equal(game.items.length,6);
+   game.restartStage();assert.ok(game.players.every(player=>player.attackMultiplier===1));assert.equal(game.items.length,3);
  });
  check('stage 4 mobs -> one boss -> teacher; no early quiz or duplicate boss',()=>{
-   game.stages.index=3;game.startStage();game.monsters=[];game.update(0);assert.equal(game.battlePhase,'BOSS');assert.equal(game.state,'PLAYING');const boss=game.monsters[0];assert.ok(boss.isBoss);assert.equal(boss.hp,64);game.update(0);assert.equal(game.monsters[0],boss);
+   game.stages.index=3;game.startStage();game.monsters=[];game.update(0);assert.equal(game.battlePhase,'BOSS');assert.equal(game.state,'PLAYING');const boss=game.monsters[0];assert.ok(boss.isBoss);assert.equal(boss.hp,80);game.update(0);assert.equal(game.monsters[0],boss);
    boss.takeDamage(boss.hp);game.update(0);assert.equal(game.state,'QUIZ');
  });
  check('boss windup telegraphs, charges, recovers; pause stops pattern timer',()=>{
    game.stages.index=3;game.startStage();game.monsters=[];game.update(0);const boss=game.monsters[0];boss.timer=.01;boss.update(.02,game.players);assert.equal(boss.phase,'WINDUP');const x=boss.x,y=boss.y;boss.update(.1,game.players);assert.equal(boss.x,x);assert.equal(boss.y,y);
    game.pauseGame();const timer=boss.timer;game.update(2);assert.equal(boss.timer,timer);game.resumeGame();boss.update(.8,game.players);assert.equal(boss.phase,'CHARGE');boss.update(.1,game.players);assert.ok(boss.x!==x||boss.y!==y);boss.update(.7,game.players);assert.equal(boss.phase,'CHASE');
  });
- check('boss needs 64 normal hits versus 32 powered hits; both modes winnable',()=>{
+ check('boss needs 80 normal hits versus 40 powered hits; both modes winnable',()=>{
    const definition=game.stages.current.boss;const {Boss}=cache.get(path.join(root,'js/entities/boss.js')).namespace;
    for(const multiplier of [1,2]){const boss=new Boss(definition);let hits=0;while(boss.active){const p=game.players[0];p.attackMultiplier=multiplier;const shot=new Projectile(p);shot.x=boss.x+20;shot.y=boss.y+20;checkCollisions([], [boss], [shot]);hits++;assert.ok(hits<=definition.hp);}assert.equal(hits,definition.hp/multiplier);}
    game.returnToStart();assert.equal(game.items.length,0);assert.ok(game.players.every(p=>p.attackMultiplier===1));
@@ -234,12 +233,12 @@ function key(code,down=true,extra={}) { let prevented=false; windowEvents.get(do
 
  check('shield adds one heart, cannot stack, persists respawn and resets stage',()=>{
    game.startGame();const p=game.players[0];p.hp=2;const shield=game.items.find(i=>i.type==='defense');p.x=shield.x;p.y=shield.y;game.update(0);assert.equal(p.maxHp,4);assert.equal(p.hp,3);
-   const second=game.items.find(i=>i.type==='defense');p.x=second.x;p.y=second.y;game.update(0);assert.equal(p.maxHp,4);assert.ok(second.active);
+   const second={...shield,active:true,x:900,y:560};game.items.push(second);p.x=second.x;p.y=second.y;game.update(0);assert.equal(p.maxHp,4);assert.ok(second.active);
    p.invincibleTime=0;p.takeDamage(4);p.update(3.1,input);assert.equal(p.hp,4);assert.equal(p.maxHp,4);game.restartStage();assert.equal(p.maxHp,3);
  });
  check('heal waits for injury and restores all hearts including shield heart',()=>{
    game.startGame();const p=game.players[0],heal=game.items.find(i=>i.type==='heal');p.x=heal.x;p.y=heal.y;game.update(0);assert.ok(heal.active);p.maxHp=4;p.hp=1;game.update(0);assert.equal(p.hp,4);assert.equal(heal.active,false);
-   assert.equal(game.items.filter(i=>i.type==='heal').length,1);
+   assert.equal(game.items.filter(i=>i.type==='heal').length,0);
  });
  check('enemies and player level grow across stages without stacking on retry',()=>{
    game.startGame();let hp=0,speed=0;
@@ -247,11 +246,37 @@ function key(code,down=true,extra={}) { let prevented=false; windowEvents.get(do
  });
  check('last-hit owner earns enemy/boss points once; retry rolls back current attempt',()=>{
    game.startGame();const [p1,p2]=game.players;const m=new Monster('score',500,300,0,1);game.monsters=[m];const shot=new Projectile(p2);shot.x=510;shot.y=310;shot.velocityX=shot.velocityY=0;game.projectiles=[shot];game.update(0);assert.equal(p1.kills,0);assert.equal(p2.kills,1);assert.equal(game.getScore(p2),10);game.update(0);assert.equal(p2.kills,1);
-   game.recordCorrectAnswer(1);game.advanceStage();p2.kills++;game.restartStage();assert.equal(p2.kills,1);assert.equal(p1.correctAnswers,1);
-   const boss={x:0,y:0,width:50,height:50,active:false,isBoss:true};game.onHit(boss,2,false,1);assert.equal(game.getScore(p1),200);assert.equal(game.totalScore,210);game.startGame();assert.equal(game.totalScore,0);
+   game.recordCorrectAnswer(1);game.advanceStage();p2.kills++;game.restartStage();assert.equal(p2.kills,1);assert.equal(game.correctAnswers,1);
+   const boss={x:0,y:0,width:50,height:50,active:false,isBoss:true};game.onHit(boss,2,false,1);assert.equal(game.getScore(p1),100);assert.equal(game.totalScore,210);game.startGame();assert.equal(game.totalScore,0);
  });
- check('selected quiz responder receives correct points once; wrong answer gets none',()=>{
-   game.startGame();const scored=new QuizSystem(()=>{},id=>game.recordCorrectAnswer(id));scored.startStage(1);scored.chooseAnswerer(2);scored.checkAnswer(scored.question.answer);scored.checkAnswer(scored.question.answer);assert.equal(game.players[1].correctAnswers,1);assert.equal(game.totalScore,100);scored.startStage(2);scored.chooseAnswerer(1);scored.checkAnswer((scored.question.answer+1)%4);assert.equal(game.players[0].correctAnswers,0);assert.equal(game.totalScore,100);
+ check('quiz correct adds common points once and wrong answer gets none',()=>{
+   game.startGame();const scored=new QuizSystem(()=>{},()=>game.recordCorrectAnswer());scored.startStage(1);scored.checkAnswer(scored.question.answer);scored.checkAnswer(scored.question.answer);assert.equal(game.correctAnswers,1);assert.equal(game.totalScore,100);assert.ok(game.players.every(p=>game.getScore(p)===0));scored.startStage(2);scored.checkAnswer((scored.question.answer+1)%4);assert.equal(game.totalScore,100);
+ });
+ check('three classes have distinct attacks and boss weaknesses multiply only matching damage',()=>{
+   const {Boss}=cache.get(path.join(root,'js/entities/boss.js')).namespace;
+   const p=game.players[0];
+   for(const type of ['warrior','archer','mage']) {
+     p.setClass(type);p.attackMultiplier=1;p.direction='right';p.attackCooldown=0;const attack=p.attack();assert.equal(attack.classType,type);assert.equal(attack.damage,config.CLASSES[type].damage);assert.equal(attack.velocityX,config.CLASSES[type].speed);
+     for(const weakness of ['warrior','archer','mage',null]) {const boss=new Boss({name:'test',hp:100,speed:0,weakness});const shot=new Projectile(p);shot.x=boss.x;shot.y=boss.y;checkCollisions([], [boss],[shot]);assert.equal(100-boss.hp,config.CLASSES[type].damage*(type===weakness?3:1));}
+   }
+   p.setClass('mage');
+ });
+ check('all nine class pairs put the unselected weakness at stage 3 and selected roles first',()=>{
+   for(const first of Object.keys(config.CLASSES)) for(const second of Object.keys(config.CLASSES)) {
+     game.players[0].setClass(first);game.players[1].setClass(second);
+     for(let i=0;i<4;i++) {
+       game.stages.index=i;game.startStage();game.monsters=[];game.update(0);const boss=game.monsters[0];assert.ok(boss.isBoss);
+       if(i===0)assert.equal(boss.weakness,first);
+       else if(i===1)assert.equal(boss.weakness,second);
+       else if(i===2){assert.ok(config.CLASSES[boss.weakness]);assert.ok(![first,second].includes(boss.weakness));const prior=boss.weakness;game.restartStage();game.monsters=[];game.update(0);assert.equal(game.monsters[0].weakness,prior);}
+       else assert.equal(boss.weakness,null);
+     }
+   }
+   game.players.forEach(p=>p.setClass('mage'));game.startGame();
+ });
+ check('random items are one per type, inside arena and do not overlap',()=>{
+   const positions=new Set();for(let i=0;i<12;i++){game.startGame();assert.equal(game.items.length,3);assert.equal(new Set(game.items.map(i=>i.type)).size,3);positions.add(JSON.stringify(game.items.map(i=>[i.x,i.y])));for(const item of game.items){assert.ok(item.x>=config.ARENA.left&&item.x+item.width<=config.ARENA.right);assert.ok(item.y>=config.ARENA.top&&item.y+item.height<=config.ARENA.bottom);}}
+   assert.ok(positions.size>1);
  });
  const {spawnSync}=require('child_process');
  const siblingPath=path.resolve(root,'../python-mini-game/src/questions.js');
@@ -275,15 +300,20 @@ function key(code,down=true,extra={}) { let prevented=false; windowEvents.get(do
  });
  // Separate context is unnecessary: UI startup should create exactly one additional chain for this independent integration instance.
  let appGame;const originalStart=Game.prototype.startGame;Game.prototype.startGame=function(){appGame=this;return originalStart.call(this);};
+ elements['p1-class'].value='warrior';elements['p2-class'].value='archer';
  await load('js/main.js');await new Promise(resolve=>setImmediate(resolve));
  check('entry point ready, start button, HUD and replay UI wired',()=>{
    assert.equal(elements['start-button'].textContent,'게임 시작');assert.equal(elements['start-button'].disabled,false);elements['start-button'].click();assert.equal(elements['start-screen'].hidden,false);elements['p1-nickname'].value='루나';elements['p2-nickname'].value='코코';elements['start-button'].click();assert.equal(elements['start-screen'].hidden,true);assert.equal(elements['ready-screen'].hidden,false);assert.equal(elements.hud.hidden,true);elements['ready-start-button'].click();assert.equal(elements['ready-screen'].hidden,true);assert.equal(elements.hud.hidden,false);assert.equal(elements['stage-number'].textContent,'STAGE 1');elements['pause-button'].click();assert.equal(elements['pause-screen'].hidden,false);elements['resume-button'].click();assert.equal(elements['pause-screen'].hidden,true);elements['pause-button'].click();elements['home-button'].click();assert.equal(elements['start-screen'].hidden,false);assert.equal(elements['pause-screen'].hidden,true);
  });
  check('nickname HUD and final individual/team scoreboard; replay resets scores',()=>{
-   elements['start-button'].click();elements['ready-start-button'].click();assert.equal(elements['p1-name'].textContent,'P1 루나');assert.equal(elements['p2-name'].textContent,'P2 코코');
-   appGame.players[0].kills=3;appGame.players[0].correctAnswers=2;appGame.players[1].kills=2;appGame.players[1].bossKills=1;appGame.players[1].correctAnswers=1;appGame.finishQuiz(true);
-   assert.equal(elements['result-p1-score'].textContent,'230점');assert.equal(elements['result-p2-score'].textContent,'210점');assert.equal(elements['result-team-score'].textContent,'협력 총점 440점');assert.equal(elements['result-scores'].hidden,false);
+   elements['start-button'].click();elements['ready-start-button'].click();assert.equal(elements['p1-name'].textContent,'P1 루나');assert.equal(elements['p2-name'].textContent,'P2 코코');assert.equal(appGame.players[0].classType,'warrior');assert.equal(appGame.players[1].classType,'archer');
+   appGame.players[0].kills=3;appGame.correctAnswers=3;appGame.players[1].kills=2;appGame.players[1].bossKills=1;appGame.finishQuiz(true);
+   assert.equal(elements['result-p1-score'].textContent,'30점');assert.equal(elements['result-p2-score'].textContent,'110점');assert.equal(elements['result-team-score'].textContent,'협력 총점 440점');assert.equal(elements['result-scores'].hidden,false);
    elements['result-button'].click();elements['ready-start-button'].click();assert.equal(appGame.totalScore,0);assert.equal(appGame.players[0].nickname,'루나');
+ });
+ check('changed names/classes refresh HUD even when score and HP match previous game',()=>{
+   appGame.returnToStart();elements['p1-nickname'].value='별빛';elements['p1-class'].value='mage';elements['start-button'].click();elements['ready-start-button'].click();assert.equal(elements['p1-name'].textContent,'P1 별빛');assert.ok(elements['p1-power'].textContent.includes('마법사'));
+   assert.equal(elements['quiz-p1'],undefined);assert.equal(elements['quiz-p2'],undefined);
  });
  console.log(`\n${checks} checks passed. No runtime exceptions.`);
 })().catch(error=>{console.error(error);process.exitCode=1;});

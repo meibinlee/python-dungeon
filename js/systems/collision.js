@@ -1,3 +1,4 @@
+import { BOSS_WEAKNESS_MULTIPLIER } from '../core/config.js';
 export function overlaps(a,b) {
   return a.x < b.x+b.width && a.x+a.width > b.x && a.y < b.y+b.height && a.y+a.height > b.y;
 }
@@ -6,7 +7,7 @@ export function checkCollisions(players,monsters,projectiles,onHit) {
     if (!projectile.active) continue;
     for (const monster of monsters) {
       if (monster.active && overlaps(projectile,monster)) {
-        const damage = monster.takeDamage(projectile.damage);
+        const damage = monster.takeDamage(projectile.damage * (monster.isBoss && monster.weakness === projectile.classType ? BOSS_WEAKNESS_MULTIPLIER : 1));
         if (damage) onHit?.(monster,damage,false,projectile.owner);
         projectile.active = false; break;
       }

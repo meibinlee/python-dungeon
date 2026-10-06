@@ -13,6 +13,7 @@ export class Game {
     this.hudCache = '';
     this.needsRender = true;
     this.damageEffects = [];
+    this.correctAnswers = 0;
     this.onHit = (entity,damage,isPlayer,owner) => {
       if (this.damageEffects.length >= MAX_DAMAGE_EFFECTS) this.damageEffects.shift();
       this.damageEffects.push({ x:entity.x+entity.width/2, y:entity.y-20, damage, isPlayer, time:DAMAGE_NUMBER_TIME });
@@ -34,17 +35,15 @@ export class Game {
     this.input.setEnabled(state === 'PLAYING', state === 'PLAYING' || state === 'PAUSED');
     this.events.onState(state);
   }
-  startGame() { this.players.forEach(player => player.resetStats()); this.stages.reset(); this.startStage(); }
-  getScore(player) { return (player.kills-player.bossKills)*KILL_SCORE+player.bossKills*BOSS_SCORE+player.correctAnswers*QUIZ_SCORE; }
-  get totalScore() { return this.players.reduce((total,player) => total+this.getScore(player),0); }
-  recordCorrectAnswer(playerId) {
-    const player = this.players.find(player => player.id === playerId);
-    if (player) { player.correctAnswers++; this.updateHud(); }
-  }
+  startGame() { this.correctAnswers = 0; this.players.forEach(player => player.resetStats()); this.stages.reset(); this.startStage(); }
+  getScore(player) { return (player.kills-player.bossKills)*KILL_SCORE+player.bossKills*BOSS_SCORE; }
+  get totalScore() { return this.players.reduce((total,player) => total+this.getScore(player),this.correctAnswers*QUIZ_SCORE); }
+  recordCorrectAnswer() { this.correctAnswers++; this.updateHud(); }
   showInstructions() {
     if (this.state === 'START' || this.state === 'GAME_CLEAR') this.setState('READY');
   }
   returnToStart() {
+    this.correctAnswers = 0;
     this.stages.reset();
     this.monsters = [];
     this.projectiles = [];
@@ -65,7 +64,8 @@ export class Game {
   }
   startStage() {
     // A failed attempt does not inflate the final score by farming the same stage.
-    this.stageStats = this.players.map(player => ({ kills:player.kills, bossKills:player.bossKills, correctAnswers:player.correctAnswers }));
+    this.stageQuizCount = this.correctAnswers;
+    this.stageStats = this.players.map(player => ({ kills:player.kills, bossKills:player.bossKills }));
     this.players.forEach(player => player.reset());
     this.players.forEach(player => player.setLevel(this.stages.current.id));
     this.projectiles = [];
@@ -79,6 +79,7 @@ export class Game {
     this.updateHud();
   }
   restartStage() {
+    this.correctAnswers = this.stageQuizCount;
     this.players.forEach((player,index) => Object.assign(player,this.stageStats[index]));
     this.startStage(); this.restartNotice = 2;
   }
@@ -89,7 +90,7 @@ export class Game {
     this.events.onTeacherQuiz(this.stages.current.id);
   }
   startBossBattle() {
-    const boss = this.stages.spawnBoss();
+    const boss = this.stages.spawnBoss(this.players);
     if (!boss) return;
     this.monsters = [boss];
     this.projectiles = [];
@@ -134,7 +135,7 @@ export class Game {
   }
   updateHud() {
     const boss = this.monsters.find(monster => monster.isBoss);
-    const values = `${this.stages.current.id}:${this.battlePhase}:${boss?.hp ?? ''}:${this.players.map(player => `${player.hp}/${player.maxHp}/${player.attackMultiplier}/${player.kills}/${player.correctAnswers}`).join(':')}`;
+    const values = `${this.correctAnswers}:${this.stages.current.id}:${this.battlePhase}:${boss?.hp ?? ''}:${this.players.map(player => `${player.hp}/${player.maxHp}/${player.attackMultiplier}/${player.kills}/${player.bossKills}/${player.classType}/${player.nickname}/${player.level}`).join(':')}`;
     if (values === this.hudCache) return;
     this.hudCache = values;
     this.events.onHud(this.players,this.stages.current,boss);
