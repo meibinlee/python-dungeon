@@ -261,6 +261,26 @@ function key(code,down=true,extra={}) { let prevented=false; windowEvents.get(do
    }
    p.setClass('mage');
  });
+ check('warrior swings only nearby with strong damage, never travels as a ranged shot',()=>{
+   const p=game.players[0];p.setClass('warrior');p.reset();p.x=300;p.y=400;p.direction='right';const shot=new Projectile(p);const near=new Monster('near',350,400,0,20),far=new Monster('far',420,400,0,20);checkCollisions([], [far,near],[shot]);assert.equal(near.hp,16);assert.equal(far.hp,20);
+   const swing=new Projectile(p),x=swing.x;swing.update(.05);assert.equal(swing.x,x);swing.update(.2);assert.equal(swing.active,false);p.setClass('mage');
+ });
+ check('mage damage grows at middle range and projectile cannot exceed its range',()=>{
+   const p=game.players[0];p.setClass('mage');p.reset();p.direction='right';
+   for(const [distance,expected] of [[0,1],[139,1],[140,2],[279,2],[280,3],[420,3]]) {
+     const shot=new Projectile(p);shot.update(distance/config.CLASSES.mage.speed);assert.equal(shot.getDamage(),expected);assert.equal(shot.traveled,distance);
+     const m=new Monster('target',shot.x,shot.y,0,30);checkCollisions([], [m],[shot]);assert.equal(m.hp,30-expected);
+   }
+   p.attackMultiplier=2;const powered=new Projectile(p);powered.update(.6);assert.equal(powered.getDamage(),6);p.attackMultiplier=1;
+   const shot=new Projectile(p);const origin=shot.x;for(let i=0;i<20;i++)shot.update(.05);assert.ok(shot.x-origin<=420);assert.equal(shot.active,false);
+ });
+ check('archer gains damage at long distance, respects range and stacks power/weakness',()=>{
+   const p=game.players[0];p.reset();p.setClass('archer');p.direction='right';
+   for(const [distance,expected] of [[0,1],[249,1],[250,2],[499,2],[500,3]]) {const shot=new Projectile(p);shot.update(distance/config.CLASSES.archer.speed);assert.equal(shot.getDamage(),expected);}
+   const {Boss}=cache.get(path.join(root,'js/entities/boss.js')).namespace;
+   p.attackMultiplier=2;const shot=new Projectile(p);shot.update(.625);const boss=new Boss({name:'weak',hp:100,speed:0,weakness:'archer'});shot.x=boss.x;shot.y=boss.y;checkCollisions([], [boss],[shot]);assert.equal(boss.hp,82);
+   p.x=50;const long=new Projectile(p);const origin=long.x;for(let i=0;i<30;i++)long.update(.05);assert.equal(long.x-origin,900);assert.equal(long.active,false);p.setClass('mage');p.reset();
+ });
  check('all nine class pairs put the unselected weakness at stage 3 and selected roles first',()=>{
    for(const first of Object.keys(config.CLASSES)) for(const second of Object.keys(config.CLASSES)) {
      game.players[0].setClass(first);game.players[1].setClass(second);
@@ -314,6 +334,10 @@ function key(code,down=true,extra={}) { let prevented=false; windowEvents.get(do
  check('changed names/classes refresh HUD even when score and HP match previous game',()=>{
    appGame.returnToStart();elements['p1-nickname'].value='별빛';elements['p1-class'].value='mage';elements['start-button'].click();elements['ready-start-button'].click();assert.equal(elements['p1-name'].textContent,'P1 별빛');assert.ok(elements['p1-power'].textContent.includes('마법사'));
    assert.equal(elements['quiz-p1'],undefined);assert.equal(elements['quiz-p2'],undefined);
+ });
+ check('ability buttons update chosen role, pressed color state and cached detailed sprites',()=>{
+   appGame.returnToStart();elements['p1-archer'].click();assert.equal(elements['p1-class'].value,'archer');assert.equal(elements['p1-archer']['aria-pressed'],'true');assert.equal(elements['p1-warrior']['aria-pressed'],'false');elements['start-button'].click();elements['ready-start-button'].click();assert.equal(appGame.players[0].classType,'archer');
+   for(const type of Object.keys(config.CLASSES)) {const sprite=renderer.getHeroSprite(type,1);assert.equal(sprite.width,32);assert.equal(sprite.height,40);assert.equal(renderer.getHeroSprite(type,1),sprite);}
  });
  console.log(`\n${checks} checks passed. No runtime exceptions.`);
 })().catch(error=>{console.error(error);process.exitCode=1;});

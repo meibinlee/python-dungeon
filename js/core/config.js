@@ -33,8 +33,8 @@ export const PLAYER_2_KEYS = { up:'ArrowUp', down:'ArrowDown', left:'ArrowLeft',
 export const DIRECTIONS = { up:[0,-1], down:[0,1], left:[-1,0], right:[1,0] };
 
 export const CLASSES = {
-  warrior: { name:'전사', damage:2, speed:0, lifetime:0.16, size:72 },
-  archer: { name:'궁수', damage:1, speed:800, lifetime:1.3, size:14 },
-  mage: { name:'마법사', damage:1, speed:500, lifetime:1.8, size:20 }
+  warrior: { name:'전사', damage:4, speed:0, lifetime:0.16, size:56, reach:32 },
+  archer: { name:'궁수', damage:1, speed:800, lifetime:1.2, size:14, range:900, damageSteps:[250,500] },
+  mage: { name:'마법사', damage:1, speed:500, lifetime:0.9, size:20, range:420, damageSteps:[140,280] }
 };
 export const BOSS_WEAKNESS_MULTIPLIER = 3;

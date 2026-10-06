@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#121424">
-  <title>CODE QUEST — 명빈T의 코딩 던전</title>
-  <link rel="icon" href="data:,">
+  <title>CODE QUEST — 명빈쌤의 파이썬 던전</title>
+  <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg">
   <link rel="preload" href="./assets/fonts/Galmuri11.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="./css/base.css">
   <link rel="stylesheet" href="./css/game.css">
@@ -27,21 +27,21 @@
         <section class="panel start-panel" aria-labelledby="title">
           <p class="eyebrow">TWO HEROES. ONE KEYBOARD.</p>
           <h1 id="title">CODE <span>QUEST</span></h1>
-          <h2>명빈T의 코딩 던전</h2>
-          <p class="intro">직업을 고르고 함께 네 명의 보스에게 도전하세요.</p>
+          <h2>명빈쌤의 파이썬 던전</h2>
+          <p class="intro">능력을 고르고 함께 네 명의 보스에게 도전하세요.</p>
           <div class="hero-setup">
-            <section class="hero-card blue"><strong>PLAYER 1</strong><canvas id="p1-preview" width="96" height="96" aria-label="P1 직업 미리보기"></canvas>
+            <section class="hero-card blue"><strong>PLAYER 1</strong><canvas id="p1-preview" width="96" height="96" aria-label="P1 능력 미리보기"></canvas>
               <label for="p1-nickname">닉네임<input id="p1-nickname" maxlength="8" placeholder="최대 8글자" autocomplete="off" required></label>
-              <label for="p1-class">직업<select id="p1-class"><option value="warrior">전사 · 칼</option><option value="archer">궁수 · 활</option><option value="mage">마법사 · 마법</option></select></label>
+              <input id="p1-class" type="hidden" value="warrior"><div class="ability-options" role="group" aria-label="PLAYER 1 능력 선택"><button type="button" id="p1-warrior" aria-pressed="true"><span class="ability-icon warrior" aria-hidden="true"></span><strong>전사</strong><small>근접 강공격</small></button><button type="button" id="p1-archer" aria-pressed="false"><span class="ability-icon archer" aria-hidden="true"></span><strong>궁수</strong><small>원거리 강화</small></button><button type="button" id="p1-mage" aria-pressed="false"><span class="ability-icon mage" aria-hidden="true"></span><strong>마법사</strong><small>중거리 강화</small></button></div>
               <p><kbd>W</kbd> 위 <kbd>S</kbd> 아래<br><kbd>A</kbd> 왼쪽 <kbd>D</kbd> 오른쪽<br><kbd>F</kbd> 공격 · 길게 누르기</p>
             </section>
-            <section class="hero-card yellow"><strong>PLAYER 2</strong><canvas id="p2-preview" width="96" height="96" aria-label="P2 직업 미리보기"></canvas>
+            <section class="hero-card yellow"><strong>PLAYER 2</strong><canvas id="p2-preview" width="96" height="96" aria-label="P2 능력 미리보기"></canvas>
               <label for="p2-nickname">닉네임<input id="p2-nickname" maxlength="8" placeholder="최대 8글자" autocomplete="off" required></label>
-              <label for="p2-class">직업<select id="p2-class"><option value="warrior">전사 · 칼</option><option value="archer" selected>궁수 · 활</option><option value="mage">마법사 · 마법</option></select></label>
+              <input id="p2-class" type="hidden" value="archer"><div class="ability-options" role="group" aria-label="PLAYER 2 능력 선택"><button type="button" id="p2-warrior" aria-pressed="false"><span class="ability-icon warrior" aria-hidden="true"></span><strong>전사</strong><small>근접 강공격</small></button><button type="button" id="p2-archer" aria-pressed="true"><span class="ability-icon archer" aria-hidden="true"></span><strong>궁수</strong><small>원거리 강화</small></button><button type="button" id="p2-mage" aria-pressed="false"><span class="ability-icon mage" aria-hidden="true"></span><strong>마법사</strong><small>중거리 강화</small></button></div>
               <p><kbd>↑</kbd> 위 <kbd>↓</kbd> 아래<br><kbd>←</kbd> 왼쪽 <kbd>→</kbd> 오른쪽<br><kbd>L</kbd> 공격 · 길게 누르기</p>
             </section>
           </div>
-          <p class="start-help">Esc 일시정지 · 검 공격 ×2 · 방패 하트 +1 · 물약 회복<br>보스 약점: 1 P1 직업 → 2 P2 직업 → 3 미선택 직업 → 4 없음</p>
+          <p class="start-help">Esc: 일시정지<br>아이템: 검(공격력 2배) · 방패(하트 +1) · 물약(체력 회복)<br>스테이지별로 특정 능력에 약한 보스가 있을 수 있어요!</p>
           <button id="start-button" disabled>LOADING...</button>
           <p id="loading-message" role="status"></p>
         </section>
@@ -54,6 +54,7 @@
             <div class="yellow"><strong id="ready-p2-name">PLAYER 2</strong><p><kbd>↑ ← ↓ →</kbd> : MOVE</p><p><kbd>L</kbd> : ATTACK</p></div>
           </div>
           <p>이동한 방향으로 공격합니다. 공격 키를 누르고 있어도 됩니다.</p>
+          <p>전사: 근접 강공격 · 궁수: 원거리에서 강해져요.<br>마법사: 중거리까지만 공격하며 멀수록 강해져요.</p>
           <p>Esc 또는 일시정지 버튼으로 전투를 멈출 수 있습니다.</p>
           <p>각 단계에 검·방패·물약은 하나씩! 서로 양보하며 사용하세요.</p>
           <div class="menu-actions"><button id="ready-start-button">2 PLAYER START</button><button id="ready-back-button">타이틀로</button></div>

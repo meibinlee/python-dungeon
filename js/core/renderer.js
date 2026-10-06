@@ -125,29 +125,59 @@ export class Renderer {
   getHeroSprite(type,id) {
     const key=`${type}:${id}`;
     if(this.heroSprites.has(key)) return this.heroSprites.get(key);
-    const sprite=document.createElement('canvas');sprite.width=16;sprite.height=20;
+    const sprite=document.createElement('canvas');sprite.width=32;sprite.height=40;
     const ctx=sprite.getContext('2d');
-    const palette={o:'#34313e',h:'#6c493a',s:'#ffdbb5',e:'#292d3c',w:'#fff5d7',c:id===1?'#529dc8':'#e5a34a',d:id===1?'#305b91':'#a76531',r:'#e99791',g:'#d9e4e6',p:'#9275bc'};
-    const rows=[
-      '................','................','....ooooooo.....','...ohhhhhhho....',
-      '..ohhhhhhhhho...','..ohsssssssho...','..ossssssssso...',
-      '..osweesweeso...','..osweesweeso...','..ossssssssso...',
-      '...osrssrso.....','....osssso......','...oodwddoo.....',
-      '..osccwccsso....','..oscccccso.....','...odcccdo......',
-      '....odddo.......','....ow.wo.......','...odd.ddo......','...ooo.ooo......'
-    ];
-    rows.forEach((row,y)=>[...row].forEach((pixel,x)=>{if(palette[pixel]){ctx.fillStyle=palette[pixel];ctx.fillRect(x,y,1,1);}}));
+    const ink='#433541',hair=id===1?'#76503d':'#975b36',hairLight=id===1?'#ad7950':'#cf975b';
+    const cloth=id===1?'#5ba6c4':'#eab85f',shade=id===1?'#3b6489':'#ae7040';
+    const skin='#ffdbb6',skinShade='#eeb18d';
     const rect=(c,x,y,w,h)=>{ctx.fillStyle=c;ctx.fillRect(x,y,w,h);};
+    // Original 32x40 sprite: layered hair, 1px contours, tiny equipment highlights.
+    rect(shade,7,23,17,11);rect(ink,10,32,5,7);rect(ink,18,32,5,7);
+    rect('#796050',11,34,3,4);rect('#796050',19,34,3,4);rect('#ead8b7',11,34,3,1);rect('#ead8b7',19,34,3,1);
+    rect(ink,9,23,14,11);rect(cloth,10,24,12,8);rect(shade,10,30,12,3);
+    rect('#fff0d2',12,24,8,2);rect('#d4aa64',15,29,3,2);
+    rect(ink,5,25,5,7);rect(skin,6,26,3,5);rect(skinShade,6,30,3,1);
+    rect(ink,23,25,5,7);rect(skin,24,26,3,5);rect(skinShade,24,30,3,1);
+    rect(ink,7,6,18,18);rect(ink,5,9,22,12);rect(ink,9,4,14,22);
+    rect(hair,8,6,16,18);rect(hair,6,10,20,10);rect(hairLight,9,5,13,3);
+    rect(skinShade,9,12,14,12);rect(skin,8,11,16,10);rect(skin,10,20,12,4);
+    rect('#ffeaca',9,12,14,5);rect(skinShade,7,16,2,4);rect(skinShade,24,16,2,4);
+    // Swept fringe rather than a straight rectangular fringe.
+    rect(hair,7,8,17,3);rect(hair,7,10,4,6);rect(hair,10,10,4,3);rect(hair,14,10,3,2);rect(hair,21,10,4,6);
+    rect(hairLight,8,8,4,1);rect(hairLight,16,8,6,1);rect('#c59365',9,7,4,1);
+    rect('#fff9e9',11,15,3,5);rect('#fff9e9',19,15,3,5);
+    rect('#514343',12,15,2,4);rect('#514343',19,15,2,4);
+    rect('#8d6a4b',12,18,2,1);rect('#8d6a4b',19,18,2,1);
+    rect('#ffffff',12,15,1,1);rect('#ffffff',19,15,1,1);
+    rect('#e79c8d',9,20,3,1);rect('#e79c8d',21,20,3,1);rect('#ac7160',16,22,2,1);
     if(type==='warrior') {
-      rect('#34313e',3,2,10,3);rect('#aab8c8',4,2,8,2);rect('#e9f0e9',5,2,4,1);rect(palette.c,7,0,3,2);
-      rect('#34313e',13,10,2,8);rect('#e4edf1',13,9,1,6);rect('#e8c76c',12,14,3,1);rect('#79573e',13,15,1,3);
+      // Open helmet, blue/gold armour, broad sword and buckler.
+      rect(ink,7,5,18,4);rect('#8091a1',8,5,16,3);rect('#cbdce0',9,5,14,1);rect('#eaf4ea',10,6,5,1);
+      rect('#667986',7,8,3,4);rect('#667986',22,8,3,4);rect('#dbe4db',8,8,1,3);
+      rect(ink,15,2,3,3);rect(cloth,16,1,2,4);rect('#f5d989',17,1,1,2);
+      rect('#8ba3b5',10,25,12,5);rect('#d4e3df',11,25,10,1);rect(cloth,14,27,5,3);
+      rect('#d6ad62',10,31,12,1);rect('#fff0a6',15,31,2,1);
+      rect(ink,28,17,3,18);rect('#baceda',28,17,2,12);rect('#f4fff7',28,18,1,10);
+      rect('#d4a258',26,29,6,2);rect('#f7db83',27,29,4,1);rect('#79553f',29,31,1,4);
+      rect(ink,2,26,5,9);rect('#688fae',3,27,3,6);rect('#e7c77c',4,28,1,4);
     } else if(type==='archer') {
-      rect('#355c4b',3,2,10,3);rect('#69916a',4,2,8,2);rect('#d2c47b',11,0,1,3);
-      rect('#b8864f',14,11,1,6);rect('#e9c77b',13,10,1,1);rect('#e9c77b',13,17,1,1);rect('#fff5d7',13,11,1,6);
-      rect('#6f7852',4,13,2,3);
+      // Feather cap, forest tunic, quiver and a clearly curved bow.
+      rect(ink,6,7,20,2);rect('#50765e',7,6,18,2);rect('#7ba078',9,5,14,2);rect('#a9bd8b',11,5,8,1);
+      rect('#dcc18a',23,2,1,5);rect('#eee2aa',24,1,1,4);
+      rect('#567c58',10,25,12,6);rect('#a2b984',11,25,3,4);rect(cloth,15,25,4,2);
+      rect('#8b6547',10,30,12,2);rect('#eac977',16,30,2,1);
+      rect('#74533e',4,21,3,8);rect('#e4d5a7',4,20,1,3);rect('#e4d5a7',6,19,1,4);
+      rect(ink,28,24,2,9);rect('#cb9658',29,25,1,7);rect('#d7b379',28,23,1,2);rect('#d7b379',28,32,1,2);
+      rect('#d7b379',27,22,1,2);rect('#d7b379',27,33,1,2);rect('#f5e1b3',27,24,1,9);
     } else {
-      rect('#34313e',2,4,12,1);rect('#765d99',3,3,10,1);rect('#9275bc',4,2,8,1);rect('#9275bc',6,1,5,1);rect('#b89bd6',8,0,2,1);rect('#f0d58a',9,3,1,1);
-      rect('#8e6384',13,11,1,7);rect('#dbe0ff',12,9,3,3);rect('#aa8adb',13,10,1,1);
+      // Asymmetric pointed hat, layered robe and crystal-tipped staff.
+      rect(ink,5,8,22,2);rect('#7e649d',6,8,20,1);rect('#6c538b',8,5,16,3);
+      rect('#9c7bbb',10,3,12,3);rect('#a989c4',13,1,8,3);rect('#c5a5dc',18,0,4,2);
+      rect('#b69ace',11,4,4,1);rect('#f0cd77',9,7,15,1);rect('#fff0a5',19,7,2,1);
+      rect('#765b98',10,25,12,7);rect('#a68bc4',11,25,3,5);rect(cloth,15,26,3,4);
+      rect('#765b98',9,31,14,3);rect('#bc9fce',10,33,12,1);rect('#e0c392',14,32,4,1);
+      rect(ink,28,21,2,15);rect('#9a6b54',28,22,1,13);
+      rect(ink,26,17,6,6);rect('#779cc3',27,17,4,6);rect('#bedef2',27,18,3,3);rect('#ffffff',28,18,1,2);rect('#ddbe72',27,23,4,1);
     }
     this.heroSprites.set(key,sprite);return sprite;
   }

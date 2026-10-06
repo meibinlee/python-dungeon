@@ -10,6 +10,7 @@ async function initialize() {
   ids.push('p1-power','p2-power','boss-hud','boss-name','boss-hp','boss-health','boss-health-trail','boss-health-fill');
   ids.push('p1-nickname','p2-nickname','ready-p1-name','ready-p2-name','p1-name','p2-name','p1-score','p2-score','team-score','result-scores','result-p1-name','result-p2-name','result-p1-details','result-p2-details','result-p1-score','result-p2-score','result-team-score');
   ids.push('p1-class','p2-class','p1-preview','p2-preview','result-quiz-score');
+  for (const id of [1,2]) for (const type of Object.keys(CLASSES)) ids.push(`p${id}-${type}`);
   const ui = Object.fromEntries(ids.map(id => [id,document.getElementById(id)]));
   try {
     const assets = new Assets();
@@ -78,7 +79,14 @@ async function initialize() {
       const selector=ui[`p${player.id}-class`];
       const preview=ui[`p${player.id}-preview`];
       const refresh=()=>renderer.drawPreview(preview,selector.value,player.id);
-      selector.addEventListener('change',refresh);refresh();
+      for (const type of Object.keys(CLASSES)) {
+        ui[`p${player.id}-${type}`].addEventListener('click',()=>{
+          selector.value=type;
+          for (const role of Object.keys(CLASSES)) ui[`p${player.id}-${role}`].setAttribute('aria-pressed',String(role===type));
+          refresh();
+        });
+      }
+      refresh();
     }
     ui['start-button'].disabled = false;
     ui['start-button'].textContent = '게임 시작';
