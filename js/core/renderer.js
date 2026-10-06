@@ -1,4 +1,4 @@
-import { GAME_WIDTH, GAME_HEIGHT, ARENA, DIRECTIONS } from './config.js';
+import { GAME_WIDTH, GAME_HEIGHT, ARENA, DIRECTIONS, DAMAGE_NUMBER_TIME } from './config.js';
 
 const PIXEL_FONT = '"Galmuri11", monospace';
 
@@ -90,6 +90,7 @@ export class Renderer {
       ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(projectile.x)+4,Math.round(projectile.y)+4,6,6);
     }
     for (const player of game.players) this.drawPlayer(player);
+    for (const effect of game.damageEffects) this.drawDamageNumber(effect);
     if (game.state === 'QUIZ' || game.state === 'STAGE_CLEAR') this.drawTeacher();
     if (game.restartNotice > 0) {
       ctx.fillStyle = '#121424e8'; ctx.fillRect(400,320,480,70);
@@ -98,23 +99,74 @@ export class Renderer {
     }
   }
   drawPlayer(player) {
-    const ctx = this.ctx, x = Math.round(player.x), y = Math.round(player.y);
-    ctx.textAlign = 'center'; ctx.font = `16px ${PIXEL_FONT}`;
+    const ctx=this.ctx, x=Math.round(player.x), y=Math.round(player.y);
+    ctx.textAlign='center';ctx.font=`16px ${PIXEL_FONT}`;
     if (!player.active) {
-      ctx.fillStyle = '#ff93a5'; ctx.fillText(`P${player.id} DOWN`,x+20,y);
-      ctx.fillStyle = '#f2f1ff'; ctx.fillText(`${Math.ceil(player.respawnTime)}s`,x+20,y+24); return;
+      ctx.strokeStyle='#fff9e5';ctx.lineWidth=3;ctx.strokeText(`P${player.id} DOWN`,x+20,y);
+      ctx.fillStyle='#9c3844';ctx.fillText(`P${player.id} DOWN`,x+20,y);
+      ctx.fillText(`${Math.ceil(player.respawnTime)}s`,x+20,y+24);return;
     }
-    if (player.invincibleTime > 0 && Math.floor(player.invincibleTime*12)%2 === 0) return;
-    ctx.fillStyle = '#0b132380'; ctx.fillRect(x-4,y+34,48,12);
-    ctx.fillStyle = player.color; ctx.fillRect(x+6,y,28,10); ctx.fillRect(x+2,y+18,36,16);
-    ctx.fillStyle = '#f4d5ae'; ctx.fillRect(x+8,y+8,24,14);
-    ctx.fillStyle = '#131b30'; ctx.fillRect(x+12,y+12,4,4); ctx.fillRect(x+24,y+12,4,4);
-    ctx.fillStyle = '#dce6ff'; ctx.fillRect(x+6,y+34,10,6); ctx.fillRect(x+24,y+34,10,6);
-    const [dx,dy] = DIRECTIONS[player.direction];
-    ctx.fillStyle = '#ffffff'; ctx.fillRect(x+17+dx*22,y+18+dy*22,6,6);
-    ctx.fillStyle = player.attackMultiplier > 1 ? '#fff3a0' : player.color;
-    ctx.fillText(`P${player.id}${player.attackMultiplier > 1 ? ' ×2' : ''}`,x+20,y-12);
-    if (player.attackMultiplier > 1) { ctx.strokeStyle='#ffe586';ctx.lineWidth=3;ctx.strokeRect(x-5,y-5,50,50); }
+    const blue=player.id===1, outline='#514139', hair=blue?'#735039':'#a96735';
+    const outfit=blue?'#479dcc':'#efaa48', shade=blue?'#326b9b':'#bd7837';
+    const stride=player.moving?(Math.floor(player.walkTime*8)%2?2:-2):0;
+    const rect=(color,dx,dy,w,h)=>{ctx.fillStyle=color;ctx.fillRect(x+dx,y+dy,w,h);};
+    rect('#38452d55',-4,35,48,10);
+    ctx.globalAlpha=player.invincibleTime>0&&Math.floor(player.invincibleTime*12)%2===0?.65:1;
+    // Big head, tiny body; original two adventurers drawn on a 2px pixel grid.
+    rect(shade,0,17,40,18);rect(outline,7,30,12,10);rect(outline,23,30,12,10);
+    rect('#725441',9,32+stride,8,8);rect('#725441',25,32-stride,8,8);
+    rect('#fff3d9',9,32+stride,8,3);rect('#fff3d9',25,32-stride,8,3);
+    rect(outline,5,13,30,20);rect(outfit,7,14,26,16);
+    rect('#fff2cd',16,17,8,6);rect('#f4ccad',0,18,7,9);rect('#f4ccad',33,18,7,9);
+    rect(outline,-2,-14,44,31);rect(outline,2,-18,36,37);
+    rect(hair,0,-14,40,29);rect('#ffe0ba',4,-7,32,24);rect('#f5c69f',2,1,4,11);rect('#f5c69f',34,1,4,11);
+    // Fringe and rounded cheek silhouette.
+    rect(hair,2,-12,36,8);rect(hair,4,-5,7,6);rect(hair,29,-5,7,6);
+    rect('#fff7e3',10,-1,7,10);rect('#fff7e3',24,-1,7,10);
+    const eyeShift=player.direction==='left'?-1:player.direction==='right'?1:0;
+    rect('#413733',11+eyeShift,0,5,9);rect('#413733',25+eyeShift,0,5,9);
+    rect('#ffffff',12+eyeShift,0,2,3);rect('#ffffff',26+eyeShift,0,2,3);
+    rect('#efa197',6,9,6,3);rect('#efa197',29,9,6,3);
+    rect('#ad715f',18,11,4,2);rect('#fff1d9',4,15,32,3);
+    if(blue) {
+      rect(outline,-2,-20,42,9);rect('#3b83b5',0,-22,38,10);rect('#77c5e4',6,-24,25,8);
+      rect('#f7dc88',29,-20,6,6);rect('#ffedb8',31,-22,2,10);
+      rect('#ddebfa',10,16,20,4);rect('#85c9e6',24,18,6,9);
+    } else {
+      rect(outline,0,-22,10,10);rect(outline,30,-22,10,10);
+      rect('#eaaa4e',2,-22,6,8);rect('#eaaa4e',32,-22,6,8);
+      rect('#f7c86f',2,-15,36,6);rect('#ffdf93',8,-18,24,6);
+      rect('#fff4d7',12,18,16,5);rect('#c57c3d',18,24,4,3);
+    }
+    if(player.hurtTime>0) {ctx.strokeStyle='#e96b6f';ctx.lineWidth=3;ctx.strokeRect(x-5,y-26,50,68);}
+    ctx.globalAlpha=1;
+    const [dx,dy]=DIRECTIONS[player.direction];
+    rect('#fff7d5',17+dx*24,12+dy*28,6,6);
+    ctx.strokeStyle='#fff9e7';ctx.lineWidth=3;
+    const label=`P${player.id} ${player.nickname}${player.attackMultiplier>1?' ×2':''}`;
+    ctx.strokeText(label,x+20,y-33);ctx.fillStyle=blue?'#215981':'#7d4c1c';ctx.fillText(label,x+20,y-33);
+    if(player.attackMultiplier>1) {ctx.strokeStyle='#ffe586';ctx.lineWidth=2;ctx.strokeRect(x-6,y-27,52,70);}
+  }
+  drawHealthBar(entity,x,y,width,height=10) {
+    const ctx=this.ctx;
+    ctx.fillStyle='#423541';ctx.fillRect(x-2,y-2,width+4,height+4);
+    ctx.fillStyle='#746471';ctx.fillRect(x,y,width,height);
+    ctx.fillStyle='#ffd679';ctx.fillRect(x,y,width*Math.max(0,entity.trailHp)/entity.maxHp,height);
+    ctx.fillStyle=entity.isBoss?'#e57081':'#dd6578';ctx.fillRect(x,y,width*Math.max(0,entity.displayHp)/entity.maxHp,height);
+    ctx.fillStyle='#ffffff66';ctx.fillRect(x,y,width*Math.max(0,entity.displayHp)/entity.maxHp,2);
+    if(!entity.isBoss) {
+      ctx.fillStyle='#423541';
+      for(let i=1;i<entity.maxHp;i++)ctx.fillRect(x+width*i/entity.maxHp,y,1,height);
+    }
+  }
+  drawDamageNumber(effect) {
+    const ctx=this.ctx, progress=1-effect.time/DAMAGE_NUMBER_TIME;
+    const y=Math.round(effect.y-progress*35);
+    ctx.globalAlpha=Math.min(1,effect.time/.2);
+    ctx.textAlign='center';ctx.font=`${effect.damage>1?26:22}px ${PIXEL_FONT}`;
+    ctx.strokeStyle='#623744';ctx.lineWidth=4;ctx.strokeText(`-${effect.damage}`,effect.x,y);
+    ctx.fillStyle=effect.isPlayer?'#ffb6b6':effect.damage>1?'#ffe18d':'#fff5cd';ctx.fillText(`-${effect.damage}`,effect.x,y);
+    ctx.globalAlpha=1;
   }
   drawMonster(monster,accent) {
     const ctx = this.ctx, x = Math.round(monster.x), y = Math.round(monster.y);
@@ -123,15 +175,37 @@ export class Renderer {
     ctx.fillStyle = '#171c2c'; ctx.fillRect(x+4,y+4,monster.width-8,monster.height-8);
     ctx.fillStyle = '#ffffff'; ctx.font = `18px ${PIXEL_FONT}`; ctx.textAlign = 'center'; ctx.fillText(monster.label,x+monster.width/2,y+28);
     ctx.fillStyle = accent; ctx.fillRect(x+22,y+40,8,6); ctx.fillRect(x+66,y+40,8,6);
-    ctx.fillStyle = '#596075'; ctx.fillRect(x,y-10,monster.width,4);
-    ctx.fillStyle = '#ff93a5'; ctx.fillRect(x,y-10,monster.width*monster.hp/monster.maxHp,4);
+    this.drawHealthBar(monster,x,y-16,monster.width,10);
   }
   drawItem(item) {
     const ctx=this.ctx, x=item.x, y=item.y;
-    ctx.fillStyle='#6a4da0';ctx.fillRect(x-4,y+4,40,24);ctx.fillRect(x+4,y-4,24,40);
-    ctx.fillStyle='#ffe68f';ctx.fillRect(x+8,y,16,32);ctx.fillRect(x,y+8,32,16);
-    ctx.fillStyle='#fff9db';ctx.fillRect(x+12,y+4,8,16);
-    ctx.textAlign='center';ctx.font=`16px ${PIXEL_FONT}`;ctx.fillStyle='#182b3b';ctx.fillText('ATK ×2',x+16,y+54);
+    const rect=(color,dx,dy,w,h)=>{ctx.fillStyle=color;ctx.fillRect(x+dx,y+dy,w,h);};
+    rect('#463b3544',-2,30,36,8);
+    let label;
+    if(item.type==='attack') {
+      // Upright sword: silver blade, gold crossguard, blue handle.
+      rect('#59493e',12,-6,10,38);rect('#59493e',6,20,24,6);
+      rect('#d5eced',14,-4,6,25);rect('#ffffff',14,-2,2,20);
+      rect('#e4b453',6,20,24,4);rect('#fff0a0',8,20,20,2);
+      rect('#3d7497',14,24,6,9);rect('#e4b453',12,32,10,4);
+      label='공격 ×2';
+    } else if(item.type==='defense') {
+      // Blue shield: stepped pointed base and a white cross.
+      rect('#475976',0,-2,32,25);rect('#475976',4,23,24,6);rect('#475976',10,29,12,5);
+      rect('#78b9dc',3,1,26,21);rect('#78b9dc',7,22,18,5);rect('#78b9dc',12,27,8,3);
+      rect('#c9edfa',4,2,4,17);rect('#fff2b4',13,5,6,19);rect('#fff2b4',7,11,18,6);
+      label='하트 +1';
+    } else {
+      // Red potion bottle with a stopper, glass shine and healing cross.
+      rect('#77563c',9,-5,14,5);rect('#514755',9,0,14,9);rect('#514755',3,8,26,25);
+      rect('#e4ece8',11,0,10,9);rect('#e4ece8',5,10,22,21);
+      rect('#eb6b78',7,16,18,13);rect('#faadb1',7,13,18,5);rect('#ffffff',7,11,3,8);
+      rect('#fff6e4',13,17,5,11);rect('#fff6e4',10,20,11,5);
+      label='체력 회복';
+    }
+    ctx.textAlign='center';ctx.font=`15px ${PIXEL_FONT}`;
+    ctx.lineWidth=3;ctx.strokeStyle='#fff6de';ctx.strokeText(label,x+16,y+54);
+    ctx.fillStyle='#334c49';ctx.fillText(label,x+16,y+54);
   }
   drawBoss(boss) {
     const ctx=this.ctx, x=Math.round(boss.x), y=Math.round(boss.y);
@@ -145,7 +219,8 @@ export class Renderer {
     ctx.fillStyle='#302846';ctx.fillRect(x+20,y+32,120,64);
     ctx.fillStyle='#ffe79d';ctx.fillRect(x+40,y+44,20,12);ctx.fillRect(x+100,y+44,20,12);
     ctx.font=`26px ${PIXEL_FONT}`;ctx.textAlign='center';ctx.fillText('{ ∞ }',x+80,y+85);
-    ctx.font=`18px ${PIXEL_FONT}`;ctx.fillStyle='#fff8d8';ctx.fillText(boss.phase==='WINDUP'?'돌진 준비! 옆으로 피하세요!':boss.label,x+80,y-28);
+    this.drawHealthBar(boss,x-12,y-24,184,12);
+    ctx.font=`18px ${PIXEL_FONT}`;ctx.fillStyle='#fff8d8';ctx.fillText(boss.phase==='WINDUP'?'돌진 준비! 옆으로 피하세요!':boss.label,x+80,y-40);
   }
   drawTeacher() {
     const ctx = this.ctx;

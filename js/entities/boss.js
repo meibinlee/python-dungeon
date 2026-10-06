@@ -1,11 +1,14 @@
 import { Monster } from './monster.js';
 import { ARENA, BOSS_CHARGE_INTERVAL, BOSS_WINDUP_TIME, BOSS_CHARGE_TIME, BOSS_CHARGE_SPEED } from '../core/config.js';
-import { clamp } from '../core/utils.js';
+import { clamp, updateHealthVisual } from '../core/utils.js';
 
 export class Boss extends Monster {
   constructor(definition) {
     super(definition.name, 560, 205, definition.speed, definition.hp);
     Object.assign(this, { isBoss:true, width:160, height:112, phase:'CHASE', timer:BOSS_CHARGE_INTERVAL, chargeX:0, chargeY:1 });
+    this.chargeInterval = definition.chargeInterval || BOSS_CHARGE_INTERVAL;
+    this.chargeSpeed = definition.chargeSpeed || BOSS_CHARGE_SPEED;
+    this.timer = this.chargeInterval;
   }
   update(dt, players) {
     if (this.phase === 'CHASE') {
@@ -26,15 +29,16 @@ export class Boss extends Monster {
       this.phase = 'WINDUP'; this.timer = BOSS_WINDUP_TIME;
       return;
     }
+    updateHealthVisual(this,dt);
     this.hitTime = Math.max(0,this.hitTime-dt);
     this.timer -= dt;
     if (this.phase === 'CHARGE') {
-      this.x = clamp(this.x+this.chargeX*BOSS_CHARGE_SPEED*dt,ARENA.left,ARENA.right-this.width);
-      this.y = clamp(this.y+this.chargeY*BOSS_CHARGE_SPEED*dt,ARENA.top,ARENA.bottom-this.height);
+      this.x = clamp(this.x+this.chargeX*this.chargeSpeed*dt,ARENA.left,ARENA.right-this.width);
+      this.y = clamp(this.y+this.chargeY*this.chargeSpeed*dt,ARENA.top,ARENA.bottom-this.height);
     }
     if (this.timer <= 0) {
       this.phase = this.phase === 'WINDUP' ? 'CHARGE' : 'CHASE';
-      this.timer = this.phase === 'CHARGE' ? BOSS_CHARGE_TIME : BOSS_CHARGE_INTERVAL;
+      this.timer = this.phase === 'CHARGE' ? BOSS_CHARGE_TIME : this.chargeInterval;
     }
   }
 }

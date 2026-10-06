@@ -7,13 +7,14 @@ const cache = new Map();
 const windowEvents = new Map(), documentEvents = new Map();
 let scheduled = [], hudWrites = 0;
 class Element {
-  constructor(id='') { this.id=id; this.children=[]; this.hidden=false; this.disabled=false; this.listeners={}; this.value=''; this.className=''; this.classList={add:()=>{}}; }
+  constructor(id='') { this.id=id; this.children=[]; this.hidden=false; this.disabled=false; this.listeners={}; this.value=''; this.className=''; this.classList={add:()=>{}}; this.style={}; }
   set textContent(value) { this.value=value; if (/hp|stage-number|stage-name/.test(this.id)) hudWrites++; }
   get textContent() { return this.children.length ? this.children.map(child => child.textContent).join('') : this.value; }
   addEventListener(type,callback) { this.listeners[type]=callback; }
   append(...elements) { this.children.push(...elements); }
   replaceChildren() { this.children=[]; }
   focus() { }
+  setAttribute(name,value) { this[name]=value; }
   click() { if (!this.disabled) this.listeners.click?.(); }
   getContext() { return new Proxy({}, {get:(_,key)=>()=>{},set:()=>true}); }
 }
@@ -105,7 +106,7 @@ function key(code,down=true,extra={}) { let prevented=false; windowEvents.get(do
  });
  check('both DOWN restarts only current stage',()=>{
    game.stages.index=2;game.startStage();for(const p of game.players){p.invincibleTime=0;p.takeDamage(3);}game.update(.01);
-   assert.equal(game.stages.current.id,3);assert.ok(game.players.every(p=>p.active&&p.hp===3));assert.equal(game.monsters.length,6);
+   assert.equal(game.stages.current.id,3);assert.ok(game.players.every(p=>p.active&&p.hp===3));assert.equal(game.monsters.length,7);
  });
  check('projectile lifetime/bounds cleanup and count cap over 20 seconds',()=>{
    game.startGame();game.monsters=[new Monster('safe',32,104,0,100)];for(const p of game.players){p.direction='down';p.invincibleTime=100;}
@@ -181,26 +182,26 @@ function key(code,down=true,extra={}) { let prevented=false; windowEvents.get(do
    assert.throws(()=>validateQuestions(QUESTIONS.filter(q=>q.stage!==4)));
  });
 
- check('crystals double attack damage once, leave second crystal for teammate',()=>{
-   game.startGame();game.monsters.forEach(m=>m.speed=0);const [p1,p2]=game.players;let crystal=game.items[0];p1.x=crystal.x;p1.y=crystal.y;game.update(0);assert.equal(p1.attackMultiplier,2);assert.equal(new Projectile(p1).damage,2);assert.equal(game.items.length,1);
-   crystal=game.items[0];p1.x=crystal.x;p1.y=crystal.y;game.update(0);assert.equal(game.items.length,1);assert.equal(p1.attackMultiplier,2);p1.x=300;p2.x=crystal.x;p2.y=crystal.y;game.update(0);assert.equal(p2.attackMultiplier,2);assert.equal(game.items.length,0);
+ check('swords double attack damage once, leave second sword for teammate',()=>{
+   game.startGame();game.monsters.forEach(m=>m.speed=0);const [p1,p2]=game.players;let crystal=game.items.find(item=>item.type==='attack');p1.x=crystal.x;p1.y=crystal.y;game.update(0);assert.equal(p1.attackMultiplier,2);assert.equal(new Projectile(p1).damage,2);assert.equal(game.items.filter(item=>item.type==='attack').length,1);
+   crystal=game.items.find(item=>item.type==='attack');p1.x=crystal.x;p1.y=crystal.y;game.update(0);assert.equal(game.items.filter(item=>item.type==='attack').length,1);assert.equal(p1.attackMultiplier,2);p1.x=300;p2.x=crystal.x;p2.y=crystal.y;game.update(0);assert.equal(p2.attackMultiplier,2);assert.equal(game.items.filter(item=>item.type==='attack').length,0);
  });
  check('DOWN cannot pick up; respawn keeps power; new/restarted stages reset it',()=>{
-   game.startGame();const p=game.players[0],crystal=game.items[0];p.x=crystal.x;p.y=crystal.y;p.invincibleTime=0;p.takeDamage(3);game.update(0);assert.equal(game.items.length,2);assert.equal(p.attackMultiplier,1);
+   game.startGame();const p=game.players[0],crystal=game.items[0];p.x=crystal.x;p.y=crystal.y;p.invincibleTime=0;p.takeDamage(3);game.update(0);assert.equal(game.items.length,6);assert.equal(p.attackMultiplier,1);
    p.reset();p.x=crystal.x;p.y=crystal.y;game.update(0);assert.equal(p.attackMultiplier,2);p.invincibleTime=0;p.takeDamage(3);p.update(3.1,input);assert.equal(p.active,true);assert.equal(p.attackMultiplier,2);
-   game.restartStage();assert.ok(game.players.every(player=>player.attackMultiplier===1));assert.equal(game.items.length,2);
+   game.restartStage();assert.ok(game.players.every(player=>player.attackMultiplier===1));assert.equal(game.items.length,6);
  });
  check('stage 4 mobs -> one boss -> teacher; no early quiz or duplicate boss',()=>{
-   game.stages.index=3;game.startStage();game.monsters=[];game.update(0);assert.equal(game.battlePhase,'BOSS');assert.equal(game.state,'PLAYING');const boss=game.monsters[0];assert.ok(boss.isBoss);assert.equal(boss.hp,40);game.update(0);assert.equal(game.monsters[0],boss);
-   boss.takeDamage(40);game.update(0);assert.equal(game.state,'QUIZ');
+   game.stages.index=3;game.startStage();game.monsters=[];game.update(0);assert.equal(game.battlePhase,'BOSS');assert.equal(game.state,'PLAYING');const boss=game.monsters[0];assert.ok(boss.isBoss);assert.equal(boss.hp,64);game.update(0);assert.equal(game.monsters[0],boss);
+   boss.takeDamage(boss.hp);game.update(0);assert.equal(game.state,'QUIZ');
  });
  check('boss windup telegraphs, charges, recovers; pause stops pattern timer',()=>{
    game.stages.index=3;game.startStage();game.monsters=[];game.update(0);const boss=game.monsters[0];boss.timer=.01;boss.update(.02,game.players);assert.equal(boss.phase,'WINDUP');const x=boss.x,y=boss.y;boss.update(.1,game.players);assert.equal(boss.x,x);assert.equal(boss.y,y);
    game.pauseGame();const timer=boss.timer;game.update(2);assert.equal(boss.timer,timer);game.resumeGame();boss.update(.8,game.players);assert.equal(boss.phase,'CHARGE');boss.update(.1,game.players);assert.ok(boss.x!==x||boss.y!==y);boss.update(.7,game.players);assert.equal(boss.phase,'CHASE');
  });
- check('boss needs 40 normal hits versus 20 powered hits; both modes winnable',()=>{
+ check('boss needs 64 normal hits versus 32 powered hits; both modes winnable',()=>{
    const definition=game.stages.current.boss;const {Boss}=cache.get(path.join(root,'js/entities/boss.js')).namespace;
-   for(const multiplier of [1,2]){const boss=new Boss(definition);let hits=0;while(boss.active){const p=game.players[0];p.attackMultiplier=multiplier;const shot=new Projectile(p);shot.x=boss.x+20;shot.y=boss.y+20;checkCollisions([], [boss], [shot]);hits++;assert.ok(hits<=40);}assert.equal(hits,40/multiplier);}
+   for(const multiplier of [1,2]){const boss=new Boss(definition);let hits=0;while(boss.active){const p=game.players[0];p.attackMultiplier=multiplier;const shot=new Projectile(p);shot.x=boss.x+20;shot.y=boss.y+20;checkCollisions([], [boss], [shot]);hits++;assert.ok(hits<=definition.hp);}assert.equal(hits,definition.hp/multiplier);}
    game.returnToStart();assert.equal(game.items.length,0);assert.ok(game.players.every(p=>p.attackMultiplier===1));
  });
  check('quiz seen-history avoids repeats until exhausted and final prefers unseen',()=>{
@@ -208,6 +209,49 @@ function key(code,down=true,extra={}) { let prevented=false; windowEvents.get(do
  });
  check('runtime rejects same question content under a new ID',()=>{
    const copy=QUESTIONS.map(q=>({...q}));copy.push({...copy[0],id:'new-id-same-question'});assert.throws(()=>validateQuestions(copy),/중복/);
+ });
+
+ check('enemy HP applies instantly, visible bar shrinks gradually with delayed trail',()=>{
+   const m=new Monster('test',120,190,0,4);assert.equal(m.takeDamage(1),1);assert.equal(m.hp,3);assert.equal(m.displayHp,4);assert.equal(m.trailHp,4);
+   m.update(.05,[]);assert.ok(m.displayHp>3&&m.displayHp<4);assert.equal(m.trailHp,4);
+   for(let i=0;i<24;i++)m.update(.05,[]);assert.equal(m.displayHp,3);assert.equal(m.trailHp,3);
+   assert.equal(m.takeDamage(10),3);assert.equal(m.hp,0);assert.equal(m.active,false);
+ });
+ check('boss small damage also animates during windup and charge',()=>{
+   const {Boss}=cache.get(path.join(root,'js/entities/boss.js')).namespace;
+   const boss=new Boss({name:'test',hp:40,speed:0});boss.phase='WINDUP';boss.timer=1;boss.takeDamage(1);boss.update(.05,game.players);assert.equal(boss.hp,39);assert.ok(boss.displayHp>39&&boss.displayHp<40);assert.equal(boss.trailHp,40);
+   boss.phase='CHARGE';boss.update(.05,game.players);assert.ok(boss.displayHp>39&&boss.displayHp<40);
+ });
+ check('damage numbers show actual loss, ignore invincibility, expire and stay capped',()=>{
+   game.startGame();const p=game.players[0];p.invincibleTime=0;const m=new Monster('touch',p.x,p.y,0,5);
+   checkCollisions(game.players,[m],[],game.onHit);assert.equal(p.hp,2);assert.equal(game.damageEffects.length,1);assert.equal(game.damageEffects[0].damage,1);checkCollisions(game.players,[m],[],game.onHit);assert.equal(game.damageEffects.length,1);
+   for(let i=0;i<70;i++)game.onHit(m,2,false);assert.equal(game.damageEffects.length,24);game.monsters.forEach(m=>m.speed=0);game.players.forEach(p=>p.invincibleTime=100);game.update(.9);assert.equal(game.damageEffects.length,0);
+   game.onHit(m,2,false);game.pauseGame();const time=game.damageEffects[0].time;game.update(2);assert.equal(game.damageEffects[0].time,time);game.restartStage();assert.equal(game.damageEffects.length,0);
+ });
+ check('cute player rendering preserves collision size and all four direction indicators',()=>{
+   const p=game.players[0];const before=[p.width,p.height];for(const direction of ['up','down','left','right']){p.direction=direction;p.moving=true;p.walkTime=.2;p.hurtTime=.3;renderer.drawPlayer(p);}assert.deepEqual([p.width,p.height],before);assert.deepEqual(before,[40,40]);renderer.render(game);
+ });
+
+ check('shield adds one heart, cannot stack, persists respawn and resets stage',()=>{
+   game.startGame();const p=game.players[0];p.hp=2;const shield=game.items.find(i=>i.type==='defense');p.x=shield.x;p.y=shield.y;game.update(0);assert.equal(p.maxHp,4);assert.equal(p.hp,3);
+   const second=game.items.find(i=>i.type==='defense');p.x=second.x;p.y=second.y;game.update(0);assert.equal(p.maxHp,4);assert.ok(second.active);
+   p.invincibleTime=0;p.takeDamage(4);p.update(3.1,input);assert.equal(p.hp,4);assert.equal(p.maxHp,4);game.restartStage();assert.equal(p.maxHp,3);
+ });
+ check('heal waits for injury and restores all hearts including shield heart',()=>{
+   game.startGame();const p=game.players[0],heal=game.items.find(i=>i.type==='heal');p.x=heal.x;p.y=heal.y;game.update(0);assert.ok(heal.active);p.maxHp=4;p.hp=1;game.update(0);assert.equal(p.hp,4);assert.equal(heal.active,false);
+   assert.equal(game.items.filter(i=>i.type==='heal').length,1);
+ });
+ check('enemies and player level grow across stages without stacking on retry',()=>{
+   game.startGame();let hp=0,speed=0;
+   for(let i=0;i<4;i++){game.stages.index=i;game.startStage();const stage=game.stages.current,p=game.players[0];assert.ok(stage.hp>hp&&stage.speed>speed);hp=stage.hp;speed=stage.speed;assert.equal(p.level,i+1);assert.equal(p.speed,config.PLAYER_SPEED+i*config.LEVEL_SPEED_BONUS);const interval=p.attackInterval;game.restartStage();assert.equal(p.attackInterval,interval);}
+ });
+ check('last-hit owner earns enemy/boss points once; retry rolls back current attempt',()=>{
+   game.startGame();const [p1,p2]=game.players;const m=new Monster('score',500,300,0,1);game.monsters=[m];const shot=new Projectile(p2);shot.x=510;shot.y=310;shot.velocityX=shot.velocityY=0;game.projectiles=[shot];game.update(0);assert.equal(p1.kills,0);assert.equal(p2.kills,1);assert.equal(game.getScore(p2),10);game.update(0);assert.equal(p2.kills,1);
+   game.recordCorrectAnswer(1);game.advanceStage();p2.kills++;game.restartStage();assert.equal(p2.kills,1);assert.equal(p1.correctAnswers,1);
+   const boss={x:0,y:0,width:50,height:50,active:false,isBoss:true};game.onHit(boss,2,false,1);assert.equal(game.getScore(p1),200);assert.equal(game.totalScore,210);game.startGame();assert.equal(game.totalScore,0);
+ });
+ check('selected quiz responder receives correct points once; wrong answer gets none',()=>{
+   game.startGame();const scored=new QuizSystem(()=>{},id=>game.recordCorrectAnswer(id));scored.startStage(1);scored.chooseAnswerer(2);scored.checkAnswer(scored.question.answer);scored.checkAnswer(scored.question.answer);assert.equal(game.players[1].correctAnswers,1);assert.equal(game.totalScore,100);scored.startStage(2);scored.chooseAnswerer(1);scored.checkAnswer((scored.question.answer+1)%4);assert.equal(game.players[0].correctAnswers,0);assert.equal(game.totalScore,100);
  });
  const {spawnSync}=require('child_process');
  const siblingPath=path.resolve(root,'../python-mini-game/src/questions.js');
@@ -230,9 +274,16 @@ function key(code,down=true,extra={}) { let prevented=false; windowEvents.get(do
    const result=spawnSync('python3',[path.join(root,'tests/check-questions.py')],{input:JSON.stringify({questions:changed,sibling:reference.questions}),encoding:'utf8',timeout:10000});assert.notEqual(result.status,0);assert.match(result.stderr,/duplicate dungeon code template/);
  });
  // Separate context is unnecessary: UI startup should create exactly one additional chain for this independent integration instance.
+ let appGame;const originalStart=Game.prototype.startGame;Game.prototype.startGame=function(){appGame=this;return originalStart.call(this);};
  await load('js/main.js');await new Promise(resolve=>setImmediate(resolve));
  check('entry point ready, start button, HUD and replay UI wired',()=>{
-   assert.equal(elements['start-button'].textContent,'게임 시작');assert.equal(elements['start-button'].disabled,false);elements['start-button'].click();assert.equal(elements['start-screen'].hidden,true);assert.equal(elements['ready-screen'].hidden,false);assert.equal(elements.hud.hidden,true);elements['ready-start-button'].click();assert.equal(elements['ready-screen'].hidden,true);assert.equal(elements.hud.hidden,false);assert.equal(elements['stage-number'].textContent,'STAGE 1');elements['pause-button'].click();assert.equal(elements['pause-screen'].hidden,false);elements['resume-button'].click();assert.equal(elements['pause-screen'].hidden,true);elements['pause-button'].click();elements['home-button'].click();assert.equal(elements['start-screen'].hidden,false);assert.equal(elements['pause-screen'].hidden,true);
+   assert.equal(elements['start-button'].textContent,'게임 시작');assert.equal(elements['start-button'].disabled,false);elements['start-button'].click();assert.equal(elements['start-screen'].hidden,false);elements['p1-nickname'].value='루나';elements['p2-nickname'].value='코코';elements['start-button'].click();assert.equal(elements['start-screen'].hidden,true);assert.equal(elements['ready-screen'].hidden,false);assert.equal(elements.hud.hidden,true);elements['ready-start-button'].click();assert.equal(elements['ready-screen'].hidden,true);assert.equal(elements.hud.hidden,false);assert.equal(elements['stage-number'].textContent,'STAGE 1');elements['pause-button'].click();assert.equal(elements['pause-screen'].hidden,false);elements['resume-button'].click();assert.equal(elements['pause-screen'].hidden,true);elements['pause-button'].click();elements['home-button'].click();assert.equal(elements['start-screen'].hidden,false);assert.equal(elements['pause-screen'].hidden,true);
+ });
+ check('nickname HUD and final individual/team scoreboard; replay resets scores',()=>{
+   elements['start-button'].click();elements['ready-start-button'].click();assert.equal(elements['p1-name'].textContent,'P1 루나');assert.equal(elements['p2-name'].textContent,'P2 코코');
+   appGame.players[0].kills=3;appGame.players[0].correctAnswers=2;appGame.players[1].kills=2;appGame.players[1].bossKills=1;appGame.players[1].correctAnswers=1;appGame.finishQuiz(true);
+   assert.equal(elements['result-p1-score'].textContent,'230점');assert.equal(elements['result-p2-score'].textContent,'210점');assert.equal(elements['result-team-score'].textContent,'협력 총점 440점');assert.equal(elements['result-scores'].hidden,false);
+   elements['result-button'].click();elements['ready-start-button'].click();assert.equal(appGame.totalScore,0);assert.equal(appGame.players[0].nickname,'루나');
  });
  console.log(`\n${checks} checks passed. No runtime exceptions.`);
 })().catch(error=>{console.error(error);process.exitCode=1;});

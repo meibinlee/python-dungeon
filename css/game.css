@@ -43,10 +43,10 @@ canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; 
 .stage-hud strong { color: #9b551d; font-size: 12px; letter-spacing: 2px; }
 footer b { color: #a75d22; }
 
-.pause-button { position: absolute; top: 76px; right: 16px; padding: 8px 12px; font-size: 12px; }
+.pause-button { position: absolute; top: 92px; right: 16px; padding: 8px 12px; font-size: 12px; }
 .boss-hud {
     position: absolute;
-    top: 78px;
+    top: 92px;
     left: 25%;
     width: 50%;
     display: flex;
@@ -60,9 +60,11 @@ footer b { color: #a75d22; }
     font-size: 12px;
     box-shadow: 0 3px #765138;
 }
-.boss-hud progress { width: 100%; min-width: 0; height: 12px; accent-color: #c55156; }
-.boss-hud progress::-webkit-progress-bar { background: #e9cfb3; border-radius: 3px; }
-.boss-hud progress::-webkit-progress-value { background: #c55156; border-radius: 3px; }
+.boss-hud progress { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.boss-health-track { position: relative; flex: 1; min-width: 20px; height: 14px; background: #746471; border: 2px solid #63473e; overflow: hidden; }
+.boss-health-track span { position: absolute; inset: 0; transform-origin: left center; }
+#boss-health-fill { background: #df6c7c; box-shadow: inset 0 2px #fda8ad; transition: transform .25s linear; }
+#boss-health-trail { background: #ffd679; transition: transform .7s linear .18s; }
 .boss-hud strong, .boss-hud span { white-space: nowrap; }
 
 @media (max-width: 700px) {
@@ -73,3 +75,6 @@ footer b { color: #a75d22; }
     .boss-hud { left: 12px; width: calc(100% - 150px); gap: 6px; padding: 6px; font-size: 10px; }
     .pause-button { right: 8px; }
 }
+
+.player-hud .nickname { color:inherit; font-size:14px; }
+.stage-hud small { color:#6f603c; font-size:11px; }

@@ -17,23 +17,24 @@
     <section class="game-wrapper" aria-label="2인 협동 코딩 던전">
       <canvas id="game" width="1280" height="720" tabindex="0" aria-label="게임 전투 화면. Esc로 일시정지"></canvas>
       <div id="hud" class="hud" hidden>
-        <div class="player-hud blue">P1 <span id="p1-hp"></span><small id="p1-power">ATK ×1</small></div>
-        <div class="stage-hud"><strong id="stage-number"></strong><span id="stage-name"></span></div>
-        <div class="player-hud yellow">P2 <span id="p2-hp"></span><small id="p2-power">ATK ×1</small></div>
+        <div class="player-hud blue"><span id="p1-name" class="nickname">P1</span> <span id="p1-hp"></span><small id="p1-power">LV 1 · ATK ×1</small><small id="p1-score">0점</small></div>
+        <div class="stage-hud"><strong id="stage-number"></strong><span id="stage-name"></span><small id="team-score">협력 총점 0</small></div>
+        <div class="player-hud yellow"><span id="p2-name" class="nickname">P2</span> <span id="p2-hp"></span><small id="p2-power">LV 1 · ATK ×1</small><small id="p2-score">0점</small></div>
       </div>
       <button id="pause-button" class="pause-button" hidden>일시정지 · Esc</button>
-      <div id="boss-hud" class="boss-hud" hidden><strong id="boss-name"></strong><progress id="boss-hp" max="40" value="40" aria-label="보스 체력"></progress><span id="boss-health"></span></div>
+      <div id="boss-hud" class="boss-hud" hidden><strong id="boss-name"></strong><progress id="boss-hp" max="40" value="40" aria-label="보스 체력"></progress><div class="boss-health-track" aria-hidden="true"><span id="boss-health-trail"></span><span id="boss-health-fill"></span></div><span id="boss-health"></span></div>
       <div id="start-screen" class="overlay">
         <section class="panel start-panel" aria-labelledby="title">
           <p class="eyebrow">TWO HEROES. ONE KEYBOARD.</p>
           <h1 id="title">CODE <span>QUEST</span></h1>
           <h2>명빈T의 코딩 던전</h2>
-          <p class="intro">숲과 성을 탐험하고, 공격력 수정을 모아 마지막 보스에게 도전하세요!</p>
+          <p class="intro">숲과 성을 탐험하고, 아이템을 모아 마지막 보스에게 도전하세요!</p>
           <div class="controls detailed-controls">
             <div class="blue"><strong>PLAYER 1 · 파랑</strong><p><kbd>W</kbd> 위 · <kbd>S</kbd> 아래</p><p><kbd>A</kbd> 왼쪽 · <kbd>D</kbd> 오른쪽</p><p><kbd>F</kbd> 공격 · 길게 누르면 연속 발사</p></div>
             <div class="yellow"><strong>PLAYER 2 · 노랑</strong><p><kbd>↑</kbd> 위 · <kbd>↓</kbd> 아래</p><p><kbd>←</kbd> 왼쪽 · <kbd>→</kbd> 오른쪽</p><p><kbd>L</kbd> 공격 · 길게 누르면 연속 발사</p></div>
           </div>
-          <p class="start-help">마지막 이동 방향으로 공격 · Esc로 일시정지<br>황금 수정에 닿으면 획득한 플레이어의 공격력 ×2<br>4단계 보스의 돌진 준비 표시가 뜨면 옆으로 피하세요!</p>
+          <p class="start-help">마지막 이동 방향으로 공격 · Esc로 일시정지<br>검: 공격 ×2 · 방패: 하트 +1 · 빨간 물약: 체력 회복<br>4단계 보스의 돌진 준비 표시가 뜨면 옆으로 피하세요!</p>
+          <div class="nickname-fields"><label class="blue" for="p1-nickname">PLAYER 1 닉네임<input id="p1-nickname" type="text" maxlength="8" placeholder="닉네임 (최대 8글자)" autocomplete="off" required></label><label class="yellow" for="p2-nickname">PLAYER 2 닉네임<input id="p2-nickname" type="text" maxlength="8" placeholder="닉네임 (최대 8글자)" autocomplete="off" required></label></div>
           <button id="start-button" disabled>LOADING...</button>
           <p id="loading-message" role="status"></p>
         </section>
@@ -42,12 +43,12 @@
         <section class="panel start-panel" role="dialog" aria-modal="true" aria-labelledby="ready-title">
           <h2 id="ready-title">두 플레이어, 준비됐나요?</h2>
           <div id="instructions" class="controls">
-            <div class="blue"><strong>PLAYER 1</strong><p><kbd>W A S D</kbd> : MOVE</p><p><kbd>F</kbd> : ATTACK</p></div>
-            <div class="yellow"><strong>PLAYER 2</strong><p><kbd>↑ ← ↓ →</kbd> : MOVE</p><p><kbd>L</kbd> : ATTACK</p></div>
+            <div class="blue"><strong id="ready-p1-name">PLAYER 1</strong><p><kbd>W A S D</kbd> : MOVE</p><p><kbd>F</kbd> : ATTACK</p></div>
+            <div class="yellow"><strong id="ready-p2-name">PLAYER 2</strong><p><kbd>↑ ← ↓ →</kbd> : MOVE</p><p><kbd>L</kbd> : ATTACK</p></div>
           </div>
           <p>이동한 방향으로 공격합니다. 공격 키를 누르고 있어도 됩니다.</p>
           <p>Esc 또는 일시정지 버튼으로 전투를 멈출 수 있습니다.</p>
-          <p>황금 수정은 한 명당 하나씩! 공격력 2배는 현재 단계 끝까지 유지됩니다.</p>
+          <p>검과 방패는 한 명당 하나씩! 빨간 물약은 최대 체력까지 회복합니다.</p>
           <div class="menu-actions"><button id="ready-start-button">2 PLAYER START</button><button id="ready-back-button">타이틀로</button></div>
         </section>
       </div>
@@ -64,6 +65,7 @@
           <p id="quiz-progress" class="eyebrow"></p>
           <h2 id="quiz-title" tabindex="-1"></h2>
           <pre id="quiz-code" hidden></pre>
+          <div class="answerer" aria-label="퀴즈 응답자 선택"><span>이번 문제 응답자:</span><button id="quiz-p1" aria-pressed="true">P1</button><button id="quiz-p2" aria-pressed="false">P2</button></div>
           <div id="quiz-choices" class="choices"></div>
           <p id="quiz-feedback" class="feedback" role="status" aria-live="polite"></p>
           <button id="quiz-continue" hidden>다음 문제</button>
@@ -72,7 +74,9 @@
       <div id="result-screen" class="overlay" hidden>
         <section class="panel result-panel" role="dialog" aria-modal="true" aria-labelledby="result-title">
           <p id="result-eyebrow" class="eyebrow"></p><h2 id="result-title"></h2>
-          <p id="result-message"></p><button id="result-button">NEXT STAGE</button>
+          <p id="result-message"></p>
+          <div id="result-scores" hidden><div class="scoreboard"><div class="score-card"><strong id="result-p1-name"></strong><p id="result-p1-details"></p><strong id="result-p1-score"></strong></div><div class="score-card"><strong id="result-p2-name"></strong><p id="result-p2-details"></p><strong id="result-p2-score"></strong></div></div><strong id="result-team-score"></strong><p class="score-rule">일반 적 10점 · 보스 100점 · 정답 100점<br>적 점수는 마지막 공격을 맞힌 플레이어에게 지급됩니다.</p></div>
+          <button id="result-button">NEXT STAGE</button>
         </section>
       </div>
     </section>

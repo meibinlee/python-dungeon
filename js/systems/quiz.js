@@ -31,14 +31,24 @@ export function validateQuestions(questions) {
 }
 
 export class QuizSystem {
-  constructor(onComplete) {
+  constructor(onComplete,onCorrect = () => {}) {
     validateQuestions(QUESTIONS);
     this.resetRun();
     this.onComplete = onComplete;
-    this.ui = Object.fromEntries(['quiz-screen','quiz-title','quiz-code','quiz-choices','quiz-feedback','quiz-progress','quiz-continue'].map(id => [id, document.getElementById(id)]));
+    this.onCorrect = onCorrect;
+    this.playerNames = ['P1','P2'];
+    this.ui = Object.fromEntries(['quiz-screen','quiz-title','quiz-code','quiz-choices','quiz-feedback','quiz-progress','quiz-continue','quiz-p1','quiz-p2'].map(id => [id, document.getElementById(id)]));
     this.ui['quiz-continue'].addEventListener('click', () => this.continueQuiz());
+    this.ui['quiz-p1'].addEventListener('click', () => this.chooseAnswerer(1));
+    this.ui['quiz-p2'].addEventListener('click', () => this.chooseAnswerer(2));
   }
-  resetRun() { this.seen = new Set(); }
+  resetRun() { this.seen = new Set(); this.questionCount=0; }
+  setPlayerNames(players) { this.playerNames = players.map(player => player.nickname); }
+  chooseAnswerer(id) {
+    if (this.locked) return;
+    this.answerer = id;
+    for (let playerId=1;playerId<=2;playerId++) this.ui[`quiz-p${playerId}`].setAttribute('aria-pressed',String(playerId===id));
+  }
   pickQuestion(pool) {
     const unseen = pool.filter(question => !this.seen.has(question.id));
     return randomItem(unseen.length ? unseen : pool.filter(question => question.id !== this.question?.id)) || pool[0];
@@ -55,13 +65,16 @@ export class QuizSystem {
     this.solved = new Set();
     const unseen = this.pool.filter(question => !this.seen.has(question.id));
     const seen = this.pool.filter(question => this.seen.has(question.id));
-    this.queue = [...shuffled(unseen),...shuffled(seen)].slice(0,3);
+    this.queue = [...shuffled(unseen.filter(q => q.stage >= 3)),...shuffled(unseen.filter(q => q.stage < 3)),...shuffled(seen)].slice(0,3);
     this.showQuestion(this.queue[0]);
   }
   showQuestion(question) {
     this.question = question;
     this.seen.add(question.id);
     this.locked = false;
+    this.questionCount++;
+    for (let id=1;id<=2;id++) {this.ui[`quiz-p${id}`].disabled=false;this.ui[`quiz-p${id}`].textContent=`P${id} ${this.playerNames[id-1]}`;}
+    this.chooseAnswerer(this.questionCount%2 ? 1 : 2);
     const ui = this.ui;
     ui['quiz-screen'].hidden = false;
     ui['quiz-progress'].textContent = this.final ? `FINAL QUIZ · ${this.solved.size + 1} / 3` : `STAGE ${this.stage} · 명빈T의 코딩 퀴즈`;
@@ -90,10 +103,13 @@ export class QuizSystem {
   checkAnswer(index) {
     if (this.locked) return;
     this.locked = true;
+    this.ui['quiz-p1'].disabled = true;
+    this.ui['quiz-p2'].disabled = true;
     this.correct = index === this.question.answer;
     for (const button of this.ui['quiz-choices'].children) button.disabled = true;
     const feedback = this.ui['quiz-feedback'];
     if (this.correct) {
+      this.onCorrect(this.answerer);
       if (this.final) this.solved.add(this.question.id);
       feedback.textContent = this.final ? `CORRECT!\n${this.solved.size} / 3 문제 해결!` : 'CORRECT!\nSTAGE CLEAR!';
     } else {
