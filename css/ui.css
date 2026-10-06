@@ -16,4 +16,6 @@ button { border:2px solid #fff1a3; padding:13px 22px; background:var(--accent); 
 .choice-number { flex-shrink:0; }
 .choice-value { white-space:pre-wrap; }
 .start-panel > #start-button { margin-top:24px; }
+.start-help { font-size:13px; line-height:1.7; color:#e8d9ad; }
+.detailed-controls { margin:16px 0; }.detailed-controls p { line-height:1.4; }
 @media(max-width:700px), (max-height:600px) { .panel { padding:14px; }.eyebrow { margin-bottom:8px; font-size:10px; }.controls { margin:12px 0; gap:8px; }.controls > div { padding:8px; }.start-panel h2 { margin:8px 0; }.intro,.small { display:none; }button { padding:10px 14px; }.teacher-line { padding-bottom:8px; margin-bottom:8px; }.quiz-panel h2 { font-size:16px; }pre { font-size:13px; margin:8px 0; padding:8px; }.choices { gap:8px; margin-top:10px; }.feedback { margin-top:8px; } }

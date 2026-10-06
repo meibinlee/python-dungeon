@@ -5,6 +5,8 @@ import { STAGES } from '../data/stages.js';
 export function validateQuestions(questions) {
   if (questions.length < 4) throw new Error('최종 퀴즈와 오답 교체를 위해 최소 4문제가 필요합니다.');
   const ids = new Set();
+  const prompts = new Set();
+  const codes = new Set();
   const stages = new Set(STAGES.map(stage => stage.id));
   for (const question of questions) {
     if (!question.id || ids.has(question.id) || !stages.has(question.stage) ||
@@ -17,6 +19,11 @@ export function validateQuestions(questions) {
       throw new Error(`문제 데이터 형식 오류: ${question.id || '(ID 없음)'}`);
     }
     ids.add(question.id);
+    const prompt = question.question.trim().replace(/\s+/g,' ').toLowerCase();
+    const code = question.code.trim();
+    if (prompts.has(prompt) || (code && codes.has(code))) throw new Error(`중복 문제 내용: ${question.id}`);
+    prompts.add(prompt);
+    if (code) codes.add(code);
   }
   for (const stage of stages) {
     if (!questions.some(question => question.stage === stage)) throw new Error(`Stage ${stage} 문제가 없습니다.`);
@@ -26,25 +33,34 @@ export function validateQuestions(questions) {
 export class QuizSystem {
   constructor(onComplete) {
     validateQuestions(QUESTIONS);
+    this.resetRun();
     this.onComplete = onComplete;
     this.ui = Object.fromEntries(['quiz-screen','quiz-title','quiz-code','quiz-choices','quiz-feedback','quiz-progress','quiz-continue'].map(id => [id, document.getElementById(id)]));
     this.ui['quiz-continue'].addEventListener('click', () => this.continueQuiz());
+  }
+  resetRun() { this.seen = new Set(); }
+  pickQuestion(pool) {
+    const unseen = pool.filter(question => !this.seen.has(question.id));
+    return randomItem(unseen.length ? unseen : pool.filter(question => question.id !== this.question?.id)) || pool[0];
   }
   startStage(stage) {
     this.final = false;
     this.pool = QUESTIONS.filter(q => q.stage === stage);
     this.stage = stage;
-    this.showQuestion(randomItem(this.pool));
+    this.showQuestion(this.pickQuestion(this.pool));
   }
   startFinal() {
     this.final = true;
     this.pool = [...QUESTIONS];
     this.solved = new Set();
-    this.queue = shuffled(this.pool).slice(0,3);
+    const unseen = this.pool.filter(question => !this.seen.has(question.id));
+    const seen = this.pool.filter(question => this.seen.has(question.id));
+    this.queue = [...shuffled(unseen),...shuffled(seen)].slice(0,3);
     this.showQuestion(this.queue[0]);
   }
   showQuestion(question) {
     this.question = question;
+    this.seen.add(question.id);
     this.locked = false;
     const ui = this.ui;
     ui['quiz-screen'].hidden = false;
@@ -104,7 +120,7 @@ export class QuizSystem {
         for (const question of this.queue.slice(1)) excluded.add(question.id);
       }
       const candidates = this.pool.filter(q => !excluded.has(q.id));
-      const next = randomItem(candidates) || this.question;
+      const next = this.pickQuestion(candidates) || this.question;
       if (this.final) this.queue[0] = next;
       this.showQuestion(next);
     } else {

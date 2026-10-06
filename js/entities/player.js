@@ -7,13 +7,15 @@ export class Player {
     Object.assign(this, { id, keys, color, spawnX:x, spawnY:y, width:PLAYER_SIZE, height:PLAYER_SIZE, speed:PLAYER_SPEED, maxHp:PLAYER_MAX_HP });
     this.reset();
   }
-  reset() {
+  reset(keepPower = false) {
+    const attackMultiplier = keepPower ? this.attackMultiplier : 1;
     Object.assign(this, { x:this.spawnX, y:this.spawnY, hp:this.maxHp, active:true, direction:'up', attackCooldown:0, invincibleTime:INVINCIBLE_TIME, respawnTime:0 });
+    this.attackMultiplier = attackMultiplier;
   }
   update(dt, input) {
     if (!this.active) {
       this.respawnTime -= dt;
-      if (this.respawnTime <= 0) this.reset();
+      if (this.respawnTime <= 0) this.reset(true);
       return;
     }
     this.invincibleTime = Math.max(0, this.invincibleTime - dt);

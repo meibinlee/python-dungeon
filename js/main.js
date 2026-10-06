@@ -6,6 +6,7 @@ import { QuizSystem } from './systems/quiz.js';
 
 async function initialize() {
   const ids = ['game','start-screen','start-button','loading-message','ready-screen','ready-start-button','ready-back-button','pause-screen','pause-button','resume-button','home-button','hud','p1-hp','p2-hp','stage-number','stage-name','result-screen','result-eyebrow','result-title','result-message','result-button'];
+  ids.push('p1-power','p2-power','boss-hud','boss-name','boss-hp','boss-health');
   const ui = Object.fromEntries(ids.map(id => [id,document.getElementById(id)]));
   try {
     const assets = new Assets();
@@ -21,15 +22,24 @@ async function initialize() {
         ui['pause-screen'].hidden = state !== 'PAUSED';
         ui['pause-button'].hidden = state !== 'PLAYING';
         ui.hud.hidden = state === 'START' || state === 'READY';
+        if (state === 'START' || state === 'READY') ui['boss-hud'].hidden = true;
         if (state !== 'QUIZ') quiz.hide();
         ui['result-screen'].hidden = state !== 'STAGE_CLEAR' && state !== 'GAME_CLEAR';
         const focus = { START:'start-button', READY:'ready-start-button', PAUSED:'resume-button', PLAYING:'game' }[state];
         if (focus) ui[focus].focus({ preventScroll:true });
       },
-      onHud(players,stage) {
+      onHud(players,stage,boss) {
         for (const player of players) ui[`p${player.id}-hp`].textContent = player.hp ? '♥'.repeat(player.hp) + '♡'.repeat(player.maxHp-player.hp) : 'DOWN';
         ui['stage-number'].textContent = `STAGE ${stage.id}`;
         ui['stage-name'].textContent = stage.name;
+        for (const player of players) ui[`p${player.id}-power`].textContent = `ATK ×${player.attackMultiplier}`;
+        ui['boss-hud'].hidden = !boss;
+        if (boss) {
+          ui['boss-name'].textContent = boss.label;
+          ui['boss-hp'].max = boss.maxHp;
+          ui['boss-hp'].value = boss.hp;
+          ui['boss-health'].textContent = `${boss.hp} / ${boss.maxHp}`;
+        }
       },
       onTeacherQuiz(stage) { quiz.startStage(stage); },
       onFinalQuiz() { quiz.startFinal(); },
@@ -45,6 +55,7 @@ async function initialize() {
     ui['start-button'].textContent = '게임 시작';
     ui['start-button'].addEventListener('click', () => game.showInstructions());
     ui['ready-start-button'].addEventListener('click', () => {
+      quiz.resetRun();
       game.startGame();
       // Empty in MVP; optional assets never block play and are cached once.
       void assets.preload(LATER_ASSETS);

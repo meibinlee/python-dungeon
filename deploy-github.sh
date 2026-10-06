@@ -7,6 +7,11 @@ cd "$(dirname "$0")"
 command -v gh >/dev/null || { echo 'GitHub CLI(gh)가 필요합니다.' >&2; exit 1; }
 command -v git >/dev/null || { echo 'Git이 필요합니다.' >&2; exit 1; }
 
+# Block publication when answer/combat checks or duplicate-question checks fail.
+command -v node >/dev/null || { echo '배포 전 검증을 위한 Node.js가 필요합니다 (npm 설치는 필요 없음).' >&2; exit 1; }
+command -v python3 >/dev/null || { echo '문제 검증을 위한 Python 3가 필요합니다.' >&2; exit 1; }
+node --experimental-vm-modules tests/check-game.cjs
+
 # Verify real API access before modifying the project or creating anything.
 quest_owner=$(gh api user --jq '.login')
 quest_user_id=$(gh api user --jq '.id')

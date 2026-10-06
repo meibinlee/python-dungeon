@@ -1,5 +1,6 @@
 """Teacher-facing answer checks. Receives current questions as JSON from check-game.cjs."""
 import contextlib
+import ast
 import io
 import json
 import keyword
@@ -49,8 +50,8 @@ print('PASS reported score example: actual output is 5')
 def normalized(code):
     """Detect repeats even when variables and numeric literals are changed.
 
-    Preserve string contents and operators: '# checkpoint' and an actual comment,
-    and equality versus threshold comparisons, are different lesson tasks.
+    Normalize ordinary string values as well, so swapping names/messages does not
+    disguise an old example. A literal '#' inside quotes is a separate lesson task.
     """
     if not code:
         return None
@@ -64,6 +65,12 @@ def normalized(code):
             value = names.setdefault(value, f'var{len(names)}')
         elif item.type == token.NUMBER:
             value = '<number>'
+        elif item.type == token.STRING:
+            try:
+                literal = ast.literal_eval(value)
+                value = '<hash-string>' if isinstance(literal, str) and '#' in literal else '<string>'
+            except (SyntaxError, ValueError):
+                value = '<string>'
         elif item.type == tokenize.INDENT:
             value = '<indent>'
         elif item.type == tokenize.NEWLINE:
@@ -71,6 +78,13 @@ def normalized(code):
         parts.append((item.type, value))
     return tuple(parts)
 
+
+for index, question in enumerate(questions):
+    for other in questions[index + 1:]:
+        assert question['question'].strip().casefold() != other['question'].strip().casefold(), (question['id'], other['id'], 'duplicate in dungeon')
+        if question['code'] and other['code']:
+            assert normalized(question['code']) != normalized(other['code']), (question['id'], other['id'], 'duplicate dungeon code template')
+print('PASS no duplicate question wording or code templates within dungeon')
 
 sibling = data.get('sibling', [])
 if sibling:

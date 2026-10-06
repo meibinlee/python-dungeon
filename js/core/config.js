@@ -1,6 +1,12 @@
 export const GAME_WIDTH = 1280;
 export const GAME_HEIGHT = 720;
-export const ARENA = { left:32, top:104, right:1248, bottom:688 };
+export const ARENA = { left:32, top:180, right:1248, bottom:688 };
+export const POWER_MULTIPLIER = 2;
+export const ITEM_SIZE = 32;
+export const BOSS_CHARGE_INTERVAL = 4;
+export const BOSS_WINDUP_TIME = 0.8;
+export const BOSS_CHARGE_TIME = 0.65;
+export const BOSS_CHARGE_SPEED = 280;
 export const PLAYER_SPEED = 260;
 export const PLAYER_MAX_HP = 3;
 export const PLAYER_SIZE = 40;

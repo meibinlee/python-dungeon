@@ -3,6 +3,7 @@ export class Projectile {
   constructor(player) {
     const [dx,dy] = DIRECTIONS[player.direction];
     Object.assign(this, { x:player.x + player.width/2 - PROJECTILE_SIZE/2 + dx*24, y:player.y + player.height/2 - PROJECTILE_SIZE/2 + dy*24, width:PROJECTILE_SIZE, height:PROJECTILE_SIZE, velocityX:dx*PROJECTILE_SPEED, velocityY:dy*PROJECTILE_SPEED, damage:1, lifetime:PROJECTILE_LIFETIME, owner:player.id, color:player.color, active:true });
+    this.damage *= player.attackMultiplier;
   }
   update(dt) {
     this.x += this.velocityX * dt; this.y += this.velocityY * dt; this.lifetime -= dt;

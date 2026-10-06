@@ -2,10 +2,11 @@ import { MAX_DELTA_TIME, MAX_PROJECTILES, PLAYER_1_KEYS, PLAYER_2_KEYS } from '.
 import { Player } from '../entities/player.js';
 import { StageSystem } from '../systems/stage.js';
 import { checkCollisions } from '../systems/collision.js';
+import { spawnItems, collectItems } from '../systems/items.js';
 
 export class Game {
   constructor(input,renderer,events) {
-    Object.assign(this, { input, renderer, events, state:'START', projectiles:[], monsters:[], restartNotice:0, lastTime:null });
+    Object.assign(this, { input, renderer, events, state:'START', projectiles:[], monsters:[], items:[], battlePhase:'MONSTERS', restartNotice:0, lastTime:null });
     this.stages = new StageSystem();
     this.players = [new Player(1,PLAYER_1_KEYS,'#6fc6ff',480,460), new Player(2,PLAYER_2_KEYS,'#ffd34e',760,460)];
     this.renderer.prepareBackground(this.stages.current);
@@ -32,6 +33,8 @@ export class Game {
     this.stages.reset();
     this.monsters = [];
     this.projectiles = [];
+    this.items = [];
+    this.battlePhase = 'MONSTERS';
     this.players.forEach(player => player.reset());
     this.restartNotice = 0;
     this.renderer.prepareBackground(this.stages.current);
@@ -47,6 +50,8 @@ export class Game {
     this.players.forEach(player => player.reset());
     this.projectiles = [];
     this.monsters = this.stages.spawnMonsters();
+    this.items = spawnItems();
+    this.battlePhase = 'MONSTERS';
     this.restartNotice = 0;
     this.renderer.prepareBackground(this.stages.current);
     this.setState('PLAYING');
@@ -58,6 +63,14 @@ export class Game {
     this.projectiles = [];
     this.setState('QUIZ');
     this.events.onTeacherQuiz(this.stages.current.id);
+  }
+  startBossBattle() {
+    const boss = this.stages.spawnBoss();
+    if (!boss) return;
+    this.monsters = [boss];
+    this.projectiles = [];
+    this.battlePhase = 'BOSS';
+    this.updateHud();
   }
   finishQuiz(final) {
     this.setState(final ? 'GAME_CLEAR' : 'STAGE_CLEAR');
@@ -72,6 +85,10 @@ export class Game {
     this.restartNotice = Math.max(0,this.restartNotice-dt);
     for (const player of this.players) {
       player.update(dt,this.input);
+    }
+    collectItems(this.players,this.items);
+    this.items = this.items.filter(item => item.active);
+    for (const player of this.players) {
       if (this.input.isDown(player.keys.attack) && this.projectiles.length < MAX_PROJECTILES) {
         const projectile = player.attack();
         if (projectile) this.projectiles.push(projectile);
@@ -84,13 +101,17 @@ export class Game {
     this.projectiles = this.projectiles.filter(projectile => projectile.active);
     this.updateHud();
     if (this.players.every(player => !player.active)) { this.restartStage(); return; }
-    if (this.stages.isComplete(this.monsters)) this.startTeacherQuiz();
+    if (this.stages.isComplete(this.monsters)) {
+      if (this.battlePhase === 'MONSTERS' && this.stages.current.boss) this.startBossBattle();
+      else this.startTeacherQuiz();
+    }
   }
   updateHud() {
-    const values = `${this.stages.current.id}:${this.players.map(player => player.hp).join(':')}`;
+    const boss = this.monsters.find(monster => monster.isBoss);
+    const values = `${this.stages.current.id}:${this.battlePhase}:${boss?.hp ?? ''}:${this.players.map(player => `${player.hp}/${player.attackMultiplier}`).join(':')}`;
     if (values === this.hudCache) return;
     this.hudCache = values;
-    this.events.onHud(this.players,this.stages.current);
+    this.events.onHud(this.players,this.stages.current,boss);
   }
   loop(timestamp) {
     const dt = this.lastTime === null ? 0 : Math.min((timestamp-this.lastTime)/1000,MAX_DELTA_TIME);

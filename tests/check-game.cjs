@@ -122,7 +122,9 @@ function key(code,down=true,extra={}) { let prevented=false; windowEvents.get(do
    game.startGame();
    for(let stage=1;stage<=4;stage++){
      assert.equal(game.stages.current.id,stage);assert.ok(game.monsters.length>=4&&game.monsters.length<=7);
-     game.monsters=[];game.update(.01);assert.equal(game.state,'QUIZ');assert.equal(quiz.question.stage,stage);
+     game.monsters=[];game.update(.01);
+     if(stage===4){assert.equal(game.state,'PLAYING');assert.equal(game.battlePhase,'BOSS');assert.equal(game.monsters.length,1);const boss=game.monsters[0];boss.hp=1;const shot=new Projectile(game.players[0]);shot.x=boss.x+20;shot.y=boss.y+20;shot.velocityX=0;shot.velocityY=0;game.projectiles=[shot];game.update(.01);}
+     assert.equal(game.state,'QUIZ');assert.equal(quiz.question.stage,stage);
      quiz.checkAnswer(quiz.question.answer);quiz.continueQuiz();assert.equal(game.state,'STAGE_CLEAR');game.continueAfterStage();
    }
    assert.ok(quiz.final);assert.equal(game.state,'QUIZ');assert.equal(new Set(quiz.queue.map(q=>q.id)).size,3);
@@ -150,7 +152,7 @@ function key(code,down=true,extra={}) { let prevented=false; windowEvents.get(do
  check('Esc pause freezes entities, damage/cooldown, lifetime, DOWN and respawn',()=>{
    game.monsters.forEach(m=>m.speed=0);game.players[0].invincibleTime=0;game.players[0].takeDamage(3);
    key('KeyL');game.update(.05);assert.ok(game.projectiles.length);assert.ok(key('Escape'));assert.equal(game.state,'PAUSED');assert.equal(input.keys.size,0);
-   const snapshot=JSON.stringify([game.players,game.monsters,game.projectiles]);for(let i=0;i<100;i++)game.update(.05);assert.equal(JSON.stringify([game.players,game.monsters,game.projectiles]),snapshot);
+   const snapshot=JSON.stringify([game.players,game.monsters,game.projectiles,game.items]);for(let i=0;i<100;i++)game.update(.05);assert.equal(JSON.stringify([game.players,game.monsters,game.projectiles,game.items]),snapshot);
    key('Escape',true,{repeat:true});assert.equal(game.state,'PAUSED');assert.equal(key('KeyL'),false);
    key('Escape');assert.equal(game.state,'PLAYING');assert.equal(input.keys.size,0);const count=game.projectiles.length;game.update(.01);assert.equal(game.projectiles.length,count);
  });
@@ -178,13 +180,55 @@ function key(code,down=true,extra={}) { let prevented=false; windowEvents.get(do
    for(const changes of [{answer:4},{answer:1.5},{choices:['x','x','y','z']},{stage:99},{id:QUESTIONS[1].id}]){const bad=QUESTIONS.map(q=>({...q}));Object.assign(bad[0],changes);assert.throws(()=>validateQuestions(bad));}
    assert.throws(()=>validateQuestions(QUESTIONS.filter(q=>q.stage!==4)));
  });
+
+ check('crystals double attack damage once, leave second crystal for teammate',()=>{
+   game.startGame();game.monsters.forEach(m=>m.speed=0);const [p1,p2]=game.players;let crystal=game.items[0];p1.x=crystal.x;p1.y=crystal.y;game.update(0);assert.equal(p1.attackMultiplier,2);assert.equal(new Projectile(p1).damage,2);assert.equal(game.items.length,1);
+   crystal=game.items[0];p1.x=crystal.x;p1.y=crystal.y;game.update(0);assert.equal(game.items.length,1);assert.equal(p1.attackMultiplier,2);p1.x=300;p2.x=crystal.x;p2.y=crystal.y;game.update(0);assert.equal(p2.attackMultiplier,2);assert.equal(game.items.length,0);
+ });
+ check('DOWN cannot pick up; respawn keeps power; new/restarted stages reset it',()=>{
+   game.startGame();const p=game.players[0],crystal=game.items[0];p.x=crystal.x;p.y=crystal.y;p.invincibleTime=0;p.takeDamage(3);game.update(0);assert.equal(game.items.length,2);assert.equal(p.attackMultiplier,1);
+   p.reset();p.x=crystal.x;p.y=crystal.y;game.update(0);assert.equal(p.attackMultiplier,2);p.invincibleTime=0;p.takeDamage(3);p.update(3.1,input);assert.equal(p.active,true);assert.equal(p.attackMultiplier,2);
+   game.restartStage();assert.ok(game.players.every(player=>player.attackMultiplier===1));assert.equal(game.items.length,2);
+ });
+ check('stage 4 mobs -> one boss -> teacher; no early quiz or duplicate boss',()=>{
+   game.stages.index=3;game.startStage();game.monsters=[];game.update(0);assert.equal(game.battlePhase,'BOSS');assert.equal(game.state,'PLAYING');const boss=game.monsters[0];assert.ok(boss.isBoss);assert.equal(boss.hp,40);game.update(0);assert.equal(game.monsters[0],boss);
+   boss.takeDamage(40);game.update(0);assert.equal(game.state,'QUIZ');
+ });
+ check('boss windup telegraphs, charges, recovers; pause stops pattern timer',()=>{
+   game.stages.index=3;game.startStage();game.monsters=[];game.update(0);const boss=game.monsters[0];boss.timer=.01;boss.update(.02,game.players);assert.equal(boss.phase,'WINDUP');const x=boss.x,y=boss.y;boss.update(.1,game.players);assert.equal(boss.x,x);assert.equal(boss.y,y);
+   game.pauseGame();const timer=boss.timer;game.update(2);assert.equal(boss.timer,timer);game.resumeGame();boss.update(.8,game.players);assert.equal(boss.phase,'CHARGE');boss.update(.1,game.players);assert.ok(boss.x!==x||boss.y!==y);boss.update(.7,game.players);assert.equal(boss.phase,'CHASE');
+ });
+ check('boss needs 40 normal hits versus 20 powered hits; both modes winnable',()=>{
+   const definition=game.stages.current.boss;const {Boss}=cache.get(path.join(root,'js/entities/boss.js')).namespace;
+   for(const multiplier of [1,2]){const boss=new Boss(definition);let hits=0;while(boss.active){const p=game.players[0];p.attackMultiplier=multiplier;const shot=new Projectile(p);shot.x=boss.x+20;shot.y=boss.y+20;checkCollisions([], [boss], [shot]);hits++;assert.ok(hits<=40);}assert.equal(hits,40/multiplier);}
+   game.returnToStart();assert.equal(game.items.length,0);assert.ok(game.players.every(p=>p.attackMultiplier===1));
+ });
+ check('quiz seen-history avoids repeats until exhausted and final prefers unseen',()=>{
+   quiz.resetRun();quiz.startStage(1);const ids=[];for(let i=0;i<3;i++){ids.push(quiz.question.id);quiz.checkAnswer((quiz.question.answer+1)%4);quiz.continueQuiz();}assert.equal(new Set(ids).size,3);const prior=new Set(quiz.seen);quiz.startFinal();assert.equal(new Set(quiz.queue.map(q=>q.id)).size,3);assert.ok(quiz.queue.every(q=>!prior.has(q.id)));quiz.resetRun();assert.equal(quiz.seen.size,0);
+ });
+ check('runtime rejects same question content under a new ID',()=>{
+   const copy=QUESTIONS.map(q=>({...q}));copy.push({...copy[0],id:'new-id-same-question'});assert.throws(()=>validateQuestions(copy),/중복/);
+ });
  const {spawnSync}=require('child_process');
  const siblingPath=path.resolve(root,'../python-mini-game/src/questions.js');
- let sibling=[];
- if(fs.existsSync(siblingPath)){sibling=(await load('../python-mini-game/src/questions.js')).default;}
- const pythonCheck=spawnSync('python3',[path.join(root,'tests/check-questions.py')],{input:JSON.stringify({questions:QUESTIONS,sibling}),encoding:'utf8'});
+ const reference=JSON.parse(fs.readFileSync(path.join(root,'tests/reference-questions.json'),'utf8'));
+ let sibling=reference.questions;
+ if(fs.existsSync(siblingPath)){
+   const live=(await load('../python-mini-game/src/questions.js')).default;
+   // Keep the fixed reference AND new live questions so older examples remain reserved.
+   sibling=[...sibling,...live.filter(q=>!sibling.some(old=>old.question===q.question&&old.code===q.code))];
+ }
+ const pythonCheck=spawnSync('python3',[path.join(root,'tests/check-questions.py')],{input:JSON.stringify({questions:QUESTIONS,sibling}),encoding:'utf8',timeout:10000});
  process.stdout.write(pythonCheck.stdout);if(pythonCheck.status!==0){throw new Error(pythonCheck.stderr||'Python question verification failed');}
  checks++;
+ check('cross-project detector rejects renamed variables, numbers and messages',()=>{
+   const changed=JSON.parse(JSON.stringify(QUESTIONS));const q=changed.find(q=>q.id==='s3-q2');q.code='rank = 62\nif rank >= 80:\n    print("Gold")\nelif rank >= 50:\n    print("Silver")\nelse:\n    print("Bronze")';q.choices=['Gold','Silver','Bronze','Gold\nSilver'];q.answer=1;
+   const result=spawnSync('python3',[path.join(root,'tests/check-questions.py')],{input:JSON.stringify({questions:changed,sibling:reference.questions}),encoding:'utf8',timeout:10000});assert.notEqual(result.status,0);assert.match(result.stderr,/same code template/);
+ });
+ check('dungeon detector rejects equivalent code under another question/ID',()=>{
+   const changed=JSON.parse(JSON.stringify(QUESTIONS));const source=changed.find(q=>q.id==='s4-q1'),target=changed.find(q=>q.id==='s4-q2');target.code=source.code;target.choices=['6','7','8','9'];target.answer=0;
+   const result=spawnSync('python3',[path.join(root,'tests/check-questions.py')],{input:JSON.stringify({questions:changed,sibling:reference.questions}),encoding:'utf8',timeout:10000});assert.notEqual(result.status,0);assert.match(result.stderr,/duplicate dungeon code template/);
+ });
  // Separate context is unnecessary: UI startup should create exactly one additional chain for this independent integration instance.
  await load('js/main.js');await new Promise(resolve=>setImmediate(resolve));
  check('entry point ready, start button, HUD and replay UI wired',()=>{
