@@ -69,6 +69,8 @@ async function initialize() {
       else if (game.state === 'STAGE_CLEAR') game.continueAfterStage();
     });
     game.returnToStart();
+    // Font loading never blocks start; refresh a paused frame when it becomes available.
+    document.fonts?.ready.then(() => { game.needsRender = true; });
   } catch (error) {
     console.error('Game initialization failed:',error);
     ui['loading-message'].textContent = '게임을 불러오지 못했습니다. 페이지를 새로고침해 주세요.';

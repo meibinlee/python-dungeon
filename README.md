@@ -2,7 +2,7 @@
 
 중학교 정보 수업용 2인 협동 픽셀 웹게임입니다. 한 키보드로 코드 몬스터를 물리치고 명빈T의 Python 복습 퀴즈를 풀어 던전을 탈출합니다.
 
-HTML, CSS, Vanilla JavaScript ES modules, Canvas만 사용합니다. 패키지 설치, 빌드, 서버 프로그램, 데이터베이스 없이 GitHub Pages의 정적 파일로 실행됩니다. 현재 모든 그래픽은 Canvas 도형이며 이미지·폰트·사운드 다운로드가 없습니다.
+HTML, CSS, Vanilla JavaScript ES modules, Canvas만 사용합니다. 패키지 설치, 빌드, 서버 프로그램, 데이터베이스 없이 GitHub Pages의 정적 파일로 실행됩니다. 현재 그래픽은 Canvas 도형이며 외부 이미지·폰트·사운드 서비스 요청이 없습니다. 한글 픽셀 폰트 Galmuri11(약 494KB)을 사이트 내부에서 한 번 불러옵니다. 폰트 로딩을 기다리지 않고 시스템 fallback으로 표시하므로 게임 시작을 막지 않습니다.
 
 ## 조작법
 
@@ -50,6 +50,7 @@ js/data/questions.js    교사가 편집하는 문제 데이터
 tests/check-game.cjs     패키지 없는 선택 개발 검증 (Node.js)
 tests/check-questions.py Python 실행 정답/인접 프로젝트 중복 검증
 tests/reference-questions.json 인접 프로젝트의 재사용 금지 기준 문제
+assets/fonts/           로컬 Galmuri11 픽셀 폰트와 SIL OFL 라이선스
 assets/sprites/         향후 캐릭터/몬스터/명빈T sprite sheet
 assets/backgrounds/     향후 stage1~4.webp
 assets/audio/           향후 선택 효과음
@@ -142,3 +143,7 @@ DOM/Canvas 대체 객체를 이용한 검증이므로 실제 Chrome의 화면 �
 ES 모듈을 실행하는 자동 검증 37개 항목을 통과했습니다. 시작/조작 안내, 일시정지/재개, 자동 일시정지, 보기 번호 구분, 정답 해설, 수정 획득/중복 소비 방지, 강화 유지/초기화, 보스 돌진/체력/퀴즈 연결, 변형 중복 문제 거부도 포함합니다. DOM/Canvas 대체 객체로 동시 입력, 네 방향 공격, cooldown, 몬스터 추적/충돌, 무적/DOWN/부활, 현재 단계 재시작, projectile 정리, 퀴즈 중 전투 정지, 정답/오답, 최종 문제 중복 방지, CLEAR/재시작, HUD 변경 제한과 단일 loop를 확인했습니다. 모든 HTML 참조 및 모듈 상대 경로도 검사했습니다. 이는 Chrome에서 직접 플레이한 결과나 실제 화면 렌더링/성능 측정은 아닙니다. 실행 환경에서 미리보기 포트가 차단되고 연결된 브라우저가 없어 브라우저 검증은 수행하지 못했습니다.
 
 현재 MVP에는 최종 이미지, 음향, 고급 애니메이션이 없습니다. 실물 디벗 성능과 실제 GitHub Pages 배포는 별도 확인이 필요합니다.
+
+## 화면 스타일과 폰트
+
+하늘색·연두색 배경, 크림색 대화창, 나무색 테두리와 주황색 강조를 사용합니다. UI 색상은 `css/base.css` 변수에서 변경합니다. 제목·본문·버튼·HUD·코드·Canvas 라벨에 로컬 Galmuri11을 적용합니다. 제목은 66/44/33px로 단계적으로 축소합니다. `font-display: swap`과 fallback을 유지하고, 폰트 재배포 시 `assets/fonts/OFL.md`의 저작권/라이선스를 함께 보존하세요. 폰트 원본은 수정하지 않았습니다.

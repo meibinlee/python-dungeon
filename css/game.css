@@ -1,14 +1,75 @@
-.game-shell { width:min(100%,1280px,calc((100dvh - 110px)*16/9)); }
-.masthead,footer { display:flex; justify-content:space-between; gap:12px; color:var(--muted); font-size:11px; padding:12px 2px; }
-.masthead > :first-child { color:var(--accent); letter-spacing:2px; font-weight:bold; }
-.game-wrapper { position:relative; width:100%; aspect-ratio:16/9; background:#181c30; border:4px solid #434a68; box-shadow:0 8px 0 #080b17; overflow:hidden; }
-canvas { display:block; width:100%; height:100%; image-rendering:pixelated; }
-.hud { position:absolute; inset:0 0 auto; display:flex; align-items:center; justify-content:space-between; min-height:64px; padding:12px 24px; background:#121424e8; border-bottom:3px solid #434a68; pointer-events:none; }
-.player-hud { font-size:clamp(12px,1.8vw,22px); font-weight:bold; }.player-hud span { color:#ff7e91; }
-.stage-hud { text-align:center; display:grid; gap:4px; font-size:clamp(10px,1.4vw,17px); }.stage-hud strong { color:var(--accent); font-size:12px; letter-spacing:2px; }
-footer b { color:var(--accent); }
-.pause-button { position:absolute; top:76px; right:16px; padding:8px 12px; font-size:12px; }
-.player-hud small { display:block; font-size:12px; margin-top:4px; color:#ffe69d; }
-.boss-hud { position:absolute; top:78px; left:25%; width:50%; background:#27223ddc; border:2px solid #e6c394; padding:7px 12px; display:flex; align-items:center; gap:10px; font-size:12px; }
-.boss-hud progress { width:100%; min-width:0; accent-color:#ed8c96; }.boss-hud strong,.boss-hud span { white-space:nowrap; }
-@media(max-width:700px) { body { padding:6px; }.game-shell { width:100%; }.masthead > :last-child, footer > :last-child { display:none; }.hud { padding:6px 10px; min-height:44px; } }
+.game-shell { width: min(100%, 1280px, calc((100dvh - 110px) * 16 / 9)); }
+
+.masthead, footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 6px;
+    color: #3e625d;
+    font-size: 11px;
+    font-weight: 700;
+}
+.masthead > :first-child { color: #8b4c22; letter-spacing: 2px; font-weight: 900; }
+
+.game-wrapper {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #a9dce8;
+    border: 5px solid var(--wood);
+    border-radius: 10px;
+    box-shadow: 0 6px 0 #5f492f, 0 10px 0 #aeccac;
+    overflow: hidden;
+}
+canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+
+.hud {
+    position: absolute;
+    inset: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 64px;
+    padding: 10px 24px;
+    background: #fff7e7f5;
+    border-bottom: 3px solid var(--wood-light);
+    box-shadow: inset 0 3px #fffdf5;
+    pointer-events: none;
+}
+.player-hud { font-size: clamp(12px, 1.8vw, 22px); font-weight: 900; }
+.player-hud span { color: #bd4144; }
+.player-hud small { display: block; margin-top: 4px; color: #745526; font-size: 12px; }
+.stage-hud { display: grid; gap: 4px; text-align: center; font-size: clamp(10px, 1.4vw, 17px); font-weight: 700; }
+.stage-hud strong { color: #9b551d; font-size: 12px; letter-spacing: 2px; }
+footer b { color: #a75d22; }
+
+.pause-button { position: absolute; top: 76px; right: 16px; padding: 8px 12px; font-size: 12px; }
+.boss-hud {
+    position: absolute;
+    top: 78px;
+    left: 25%;
+    width: 50%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 12px;
+    background: #fff0def5;
+    border: 2px solid #a76945;
+    border-radius: 5px;
+    color: #713b38;
+    font-size: 12px;
+    box-shadow: 0 3px #765138;
+}
+.boss-hud progress { width: 100%; min-width: 0; height: 12px; accent-color: #c55156; }
+.boss-hud progress::-webkit-progress-bar { background: #e9cfb3; border-radius: 3px; }
+.boss-hud progress::-webkit-progress-value { background: #c55156; border-radius: 3px; }
+.boss-hud strong, .boss-hud span { white-space: nowrap; }
+
+@media (max-width: 700px) {
+    body { padding: 6px; }
+    .game-shell { width: 100%; }
+    .masthead > :last-child, footer > :last-child { display: none; }
+    .hud { padding: 6px 10px; min-height: 44px; }
+    .boss-hud { left: 12px; width: calc(100% - 150px); gap: 6px; padding: 6px; font-size: 10px; }
+    .pause-button { right: 8px; }
+}

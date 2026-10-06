@@ -1,5 +1,7 @@
 import { GAME_WIDTH, GAME_HEIGHT, ARENA, DIRECTIONS } from './config.js';
 
+const PIXEL_FONT = '"Galmuri11", monospace';
+
 export class Renderer {
   constructor(canvas, assets) {
     this.ctx = canvas.getContext('2d', { alpha:false });
@@ -91,13 +93,13 @@ export class Renderer {
     if (game.state === 'QUIZ' || game.state === 'STAGE_CLEAR') this.drawTeacher();
     if (game.restartNotice > 0) {
       ctx.fillStyle = '#121424e8'; ctx.fillRect(400,320,480,70);
-      ctx.fillStyle = '#ffd34e'; ctx.font = 'bold 22px monospace'; ctx.textAlign = 'center';
+      ctx.fillStyle = '#ffd34e'; ctx.font = `22px ${PIXEL_FONT}`; ctx.textAlign = 'center';
       ctx.fillText('두 플레이어 DOWN! 현재 스테이지 재시작',640,362);
     }
   }
   drawPlayer(player) {
     const ctx = this.ctx, x = Math.round(player.x), y = Math.round(player.y);
-    ctx.textAlign = 'center'; ctx.font = 'bold 16px monospace';
+    ctx.textAlign = 'center'; ctx.font = `16px ${PIXEL_FONT}`;
     if (!player.active) {
       ctx.fillStyle = '#ff93a5'; ctx.fillText(`P${player.id} DOWN`,x+20,y);
       ctx.fillStyle = '#f2f1ff'; ctx.fillText(`${Math.ceil(player.respawnTime)}s`,x+20,y+24); return;
@@ -119,7 +121,7 @@ export class Renderer {
     ctx.fillStyle = '#0b132380'; ctx.fillRect(x+4,y+monster.height-4,monster.width,10);
     ctx.fillStyle = monster.hitTime > 0 ? '#fff1a3' : accent; ctx.fillRect(x,y,monster.width,monster.height);
     ctx.fillStyle = '#171c2c'; ctx.fillRect(x+4,y+4,monster.width-8,monster.height-8);
-    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 18px monospace'; ctx.textAlign = 'center'; ctx.fillText(monster.label,x+monster.width/2,y+28);
+    ctx.fillStyle = '#ffffff'; ctx.font = `18px ${PIXEL_FONT}`; ctx.textAlign = 'center'; ctx.fillText(monster.label,x+monster.width/2,y+28);
     ctx.fillStyle = accent; ctx.fillRect(x+22,y+40,8,6); ctx.fillRect(x+66,y+40,8,6);
     ctx.fillStyle = '#596075'; ctx.fillRect(x,y-10,monster.width,4);
     ctx.fillStyle = '#ff93a5'; ctx.fillRect(x,y-10,monster.width*monster.hp/monster.maxHp,4);
@@ -129,7 +131,7 @@ export class Renderer {
     ctx.fillStyle='#6a4da0';ctx.fillRect(x-4,y+4,40,24);ctx.fillRect(x+4,y-4,24,40);
     ctx.fillStyle='#ffe68f';ctx.fillRect(x+8,y,16,32);ctx.fillRect(x,y+8,32,16);
     ctx.fillStyle='#fff9db';ctx.fillRect(x+12,y+4,8,16);
-    ctx.textAlign='center';ctx.font='bold 16px monospace';ctx.fillStyle='#182b3b';ctx.fillText('ATK ×2',x+16,y+54);
+    ctx.textAlign='center';ctx.font=`16px ${PIXEL_FONT}`;ctx.fillStyle='#182b3b';ctx.fillText('ATK ×2',x+16,y+54);
   }
   drawBoss(boss) {
     const ctx=this.ctx, x=Math.round(boss.x), y=Math.round(boss.y);
@@ -142,8 +144,8 @@ export class Renderer {
     ctx.fillStyle='#efd6a4';ctx.fillRect(x+24,y-12,24,28);ctx.fillRect(x+112,y-12,24,28);ctx.fillRect(x+24,y+12,112,8);
     ctx.fillStyle='#302846';ctx.fillRect(x+20,y+32,120,64);
     ctx.fillStyle='#ffe79d';ctx.fillRect(x+40,y+44,20,12);ctx.fillRect(x+100,y+44,20,12);
-    ctx.font='bold 26px monospace';ctx.textAlign='center';ctx.fillText('{ ∞ }',x+80,y+85);
-    ctx.font='bold 18px monospace';ctx.fillStyle='#fff8d8';ctx.fillText(boss.phase==='WINDUP'?'돌진 준비! 옆으로 피하세요!':boss.label,x+80,y-28);
+    ctx.font=`26px ${PIXEL_FONT}`;ctx.textAlign='center';ctx.fillText('{ ∞ }',x+80,y+85);
+    ctx.font=`18px ${PIXEL_FONT}`;ctx.fillStyle='#fff8d8';ctx.fillText(boss.phase==='WINDUP'?'돌진 준비! 옆으로 피하세요!':boss.label,x+80,y-28);
   }
   drawTeacher() {
     const ctx = this.ctx;
@@ -151,6 +153,6 @@ export class Renderer {
     ctx.fillStyle = '#d8dbea'; ctx.fillRect(613,264,54,12);
     ctx.fillStyle = '#101725'; ctx.fillRect(621,284,16,8); ctx.fillRect(644,284,16,8);
     ctx.fillStyle = '#8e91eb'; ctx.fillRect(607,314,66,54);
-    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 20px monospace'; ctx.textAlign = 'center'; ctx.fillText('명빈T',640,250);
+    ctx.fillStyle = '#ffffff'; ctx.font = `20px ${PIXEL_FONT}`; ctx.textAlign = 'center'; ctx.fillText('명빈T',640,250);
   }
 }
