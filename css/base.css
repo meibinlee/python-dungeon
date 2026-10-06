@@ -1,0 +1,10 @@
+:root { --bg-dark:#121424; --panel:#232642; --text:#f2f1ff; --muted:#a4abc5; --accent:#ffd34e; --blue:#6fc6ff; --yellow:#ffd34e; }
+* { box-sizing:border-box; }
+[hidden] { display:none !important; }
+body { margin:0; min-height:100vh; background:var(--bg-dark); color:var(--text); font-family:ui-monospace,Consolas,"Apple SD Gothic Neo","Malgun Gothic",monospace; display:grid; place-items:center; padding:18px; }
+h1,h2,p { margin:0; }
+button { font:inherit; cursor:pointer; }
+button:disabled { cursor:default; }
+button:focus-visible { outline:3px solid white; outline-offset:4px; }
+.blue { color:var(--blue); }.yellow { color:var(--yellow); }
+.small { font-size:12px; color:var(--muted); }

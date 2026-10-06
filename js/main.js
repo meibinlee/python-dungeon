@@ -1,0 +1,57 @@
+import { Assets, ESSENTIAL_ASSETS, LATER_ASSETS } from './core/assets.js';
+import { Input } from './core/input.js';
+import { Renderer } from './core/renderer.js';
+import { Game } from './core/game.js';
+import { QuizSystem } from './systems/quiz.js';
+
+async function initialize() {
+  const ids = ['game','start-screen','start-button','loading-message','hud','p1-hp','p2-hp','stage-number','stage-name','result-screen','result-eyebrow','result-title','result-message','result-button'];
+  const ui = Object.fromEntries(ids.map(id => [id,document.getElementById(id)]));
+  try {
+    const assets = new Assets();
+    await assets.preload(ESSENTIAL_ASSETS);
+    const input = new Input();
+    const renderer = new Renderer(ui.game,assets);
+    let game;
+    const quiz = new QuizSystem(final => game.finishQuiz(final));
+    game = new Game(input,renderer, {
+      onState(state) {
+        ui['start-screen'].hidden = state !== 'START';
+        ui.hud.hidden = state === 'START';
+        ui['result-screen'].hidden = state !== 'STAGE_CLEAR' && state !== 'GAME_CLEAR';
+      },
+      onHud(players,stage) {
+        for (const player of players) ui[`p${player.id}-hp`].textContent = player.hp ? '♥'.repeat(player.hp) + '♡'.repeat(player.maxHp-player.hp) : 'DOWN';
+        ui['stage-number'].textContent = `STAGE ${stage.id}`;
+        ui['stage-name'].textContent = stage.name;
+      },
+      onTeacherQuiz(stage) { quiz.startStage(stage); },
+      onFinalQuiz() { quiz.startFinal(); },
+      onResult(final,last) {
+        ui['result-eyebrow'].textContent = final ? 'CODE QUEST' : 'CORRECT!';
+        ui['result-title'].textContent = final ? 'CLEAR!' : 'STAGE CLEAR!';
+        ui['result-message'].textContent = final ? '코딩 던전 탈출 성공! 두 사람의 협동과 코딩 실력이 빛났어요!' : last ? '네 개의 던전 정복 완료! 마지막 코딩 문제 3개에 도전하세요.' : '잘했어요! 다음 던전도 함께 도전해 볼까요?';
+        ui['result-button'].textContent = final ? 'PLAY AGAIN' : last ? 'FINAL QUIZ START' : 'NEXT STAGE';
+        ui['result-button'].focus({ preventScroll:true });
+      }
+    });
+    ui['start-button'].disabled = false;
+    ui['start-button'].textContent = '2 PLAYER START';
+    ui['start-button'].addEventListener('click', () => {
+      game.startGame();
+      // Empty in MVP; optional assets never block play and are cached once.
+      void assets.preload(LATER_ASSETS);
+    });
+    ui['result-button'].addEventListener('click', () => {
+      if (game.state === 'GAME_CLEAR') game.startGame();
+      else if (game.state === 'STAGE_CLEAR') game.continueAfterStage();
+    });
+  } catch (error) {
+    console.error('Game initialization failed:',error);
+    ui['loading-message'].textContent = '게임을 불러오지 못했습니다. 페이지를 새로고침해 주세요.';
+    ui['start-button'].textContent = 'LOAD FAILED';
+  }
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',initialize,{ once:true });
+else void initialize();

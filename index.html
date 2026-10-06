@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#121424">
+  <title>CODE QUEST — 명빈T의 코딩 던전</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="./css/base.css">
+  <link rel="stylesheet" href="./css/game.css">
+  <link rel="stylesheet" href="./css/ui.css">
+</head>
+<body>
+  <main class="game-shell">
+    <header class="masthead"><span>CODE QUEST</span><span>CO-OP CODING ADVENTURE · 2 PLAYERS</span></header>
+    <section class="game-wrapper" aria-label="2인 협동 코딩 던전">
+      <canvas id="game" width="1280" height="720" aria-label="게임 전투 화면"></canvas>
+      <div id="hud" class="hud" hidden>
+        <div class="player-hud blue">P1 <span id="p1-hp"></span></div>
+        <div class="stage-hud"><strong id="stage-number"></strong><span id="stage-name"></span></div>
+        <div class="player-hud yellow">P2 <span id="p2-hp"></span></div>
+      </div>
+      <div id="start-screen" class="overlay">
+        <section class="panel start-panel" aria-labelledby="title">
+          <p class="eyebrow">TWO HEROES. ONE KEYBOARD.</p>
+          <h1 id="title">CODE <span>QUEST</span></h1>
+          <h2>명빈T의 코딩 던전</h2>
+          <p class="intro">코드 몬스터를 물리치고, 함께 문제를 풀어 던전을 탈출하세요!</p>
+          <div id="instructions" class="controls">
+            <div class="blue"><strong>PLAYER 1</strong><p><kbd>W A S D</kbd> : MOVE</p><p><kbd>F</kbd> : ATTACK</p></div>
+            <div class="yellow"><strong>PLAYER 2</strong><p><kbd>↑ ← ↓ →</kbd> : MOVE</p><p><kbd>L</kbd> : ATTACK</p></div>
+          </div>
+          <button id="start-button" disabled>LOADING...</button>
+          <p class="small">이동한 방향으로 공격 · 공격 키를 누르고 있어도 OK</p>
+          <p id="loading-message" role="status"></p>
+        </section>
+      </div>
+      <div id="quiz-screen" class="overlay" hidden>
+        <section class="panel quiz-panel" role="dialog" aria-modal="true" aria-labelledby="quiz-title">
+          <div class="teacher-line"><div class="teacher-pixel" aria-hidden="true">T</div><div><strong>명빈T</strong><p>“잠깐! 다음 스테이지로 가려면<br>코딩 문제를 풀어야 한다!”</p></div></div>
+          <p id="quiz-progress" class="eyebrow"></p>
+          <h2 id="quiz-title" tabindex="-1"></h2>
+          <pre id="quiz-code" hidden></pre>
+          <div id="quiz-choices" class="choices"></div>
+          <p id="quiz-feedback" class="feedback" role="status" aria-live="polite"></p>
+          <button id="quiz-continue" hidden>다음 문제</button>
+        </section>
+      </div>
+      <div id="result-screen" class="overlay" hidden>
+        <section class="panel result-panel" role="dialog" aria-modal="true" aria-labelledby="result-title">
+          <p id="result-eyebrow" class="eyebrow"></p><h2 id="result-title"></h2>
+          <p id="result-message"></p><button id="result-button">NEXT STAGE</button>
+        </section>
+      </div>
+    </section>
+    <footer><span>WASD + F <b> / </b> 방향키 + L</span><span>4 STAGES · 3 FINAL QUESTIONS · 함께 도전!</span></footer>
+    <noscript>이 게임을 실행하려면 브라우저의 JavaScript를 활성화하세요.</noscript>
+  </main>
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>
