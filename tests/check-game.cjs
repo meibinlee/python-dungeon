@@ -132,7 +132,7 @@ function key(code,down=true,extra={}) { let prevented=false; windowEvents.get(do
    const old=quiz.question.id;quiz.checkAnswer((quiz.question.answer+1)%4);quiz.continueQuiz();assert.notEqual(quiz.question.id,old);assert.equal(new Set(quiz.queue.map(q=>q.id)).size,3);
    const solved=[];
    for(let i=0;i<3;i++){solved.push(quiz.question.id);quiz.checkAnswer(quiz.question.answer);quiz.continueQuiz();}
-   assert.equal(new Set(solved).size,3);assert.equal(game.state,'GAME_CLEAR');assert.equal(quiz.solved.size,3);game.startGame();assert.equal(game.stages.current.id,1);assert.equal(game.state,'PLAYING');
+   assert.equal(new Set(solved).size,3);assert.equal(game.state,'PLAYING');assert.equal(game.battlePhase,'DEMON');game.monsters[0].takeDamage(999);game.update(0);assert.equal(game.state,'GAME_CLEAR');assert.equal(quiz.solved.size,3);game.startGame();assert.equal(game.stages.current.id,1);assert.equal(game.state,'PLAYING');
  });
  check('render all stages, DOWN, teacher, game clear without runtime exceptions',()=>{
    for(let stage=0;stage<4;stage++){game.stages.index=stage;game.startStage();renderer.render(game);game.players[0].active=false;renderer.render(game);game.state='QUIZ';renderer.render(game);}
@@ -298,6 +298,34 @@ function key(code,down=true,extra={}) { let prevented=false; windowEvents.get(do
    const positions=new Set();for(let i=0;i<12;i++){game.startGame();assert.equal(game.items.length,3);assert.equal(new Set(game.items.map(i=>i.type)).size,3);positions.add(JSON.stringify(game.items.map(i=>[i.x,i.y])));for(const item of game.items){assert.ok(item.x>=config.ARENA.left&&item.x+item.width<=config.ARENA.right);assert.ok(item.y>=config.ARENA.top&&item.y+item.height<=config.ARENA.bottom);}}
    assert.ok(positions.size>1);
  });
+ check('demon retry keeps quiz score, counts attempts and resets encounter only',()=>{
+   game.startGame();game.correctAnswers=7;game.finishQuiz(true);assert.equal(game.demonAttempts,1);
+   game.players.forEach(p=>{p.invincibleTime=0;const damage=p.takeDamage(99);game.onHit(p,damage,true);});
+   game.update(0);assert.equal(game.demonAttempts,2);assert.equal(game.correctAnswers,7);assert.equal(game.deaths,2);assert.equal(game.monsters[0].hp,config.DEMON.hp);
+   game.monsters[0].takeDamage(999);game.update(0);assert.equal(game.state,'GAME_CLEAR');assert.equal(game.demonBonus,400);
+ });
+ check('wrong/death penalties survive stage rollback, clamp total and reset new run',()=>{
+   game.startGame();for(let i=0;i<5;i++)game.recordWrongAnswer();game.deaths=4;assert.equal(game.penalty,50);assert.equal(game.totalScore,0);game.restartStage();assert.equal(game.penalty,50);
+   const scored=new QuizSystem(()=>{},()=>{},()=>game.recordWrongAnswer());scored.startStage(1);const wrong=(scored.question.answer+1)%4;scored.checkAnswer(wrong);scored.checkAnswer(wrong);assert.equal(game.wrongAnswers,6);
+   game.startGame();assert.equal(game.penalty,0);assert.equal(game.deaths,0);
+ });
+ check('all abilities get simultaneous final-only ultimates, cooldown and bounded impacts',()=>{
+   for(const type of Object.keys(config.CLASSES)) {
+     game.startGame();game.players.forEach(p=>p.setClass(type));input.keys.add('KeyG');input.keys.add('KeyK');game.update(0);assert.equal(game.projectiles.length,0);
+     game.finishQuiz(true);input.keys.add('KeyG');input.keys.add('KeyK');game.update(0);assert.equal(game.projectiles.length,2);assert.ok(game.projectiles.every(p=>p.ultimate&&p.damage===36&&p.velocityY!==0));
+     game.update(0);assert.equal(game.projectiles.length,2);game.pauseGame();const cooldown=game.players[0].ultimateCooldown;game.update(10);assert.equal(game.players[0].ultimateCooldown,cooldown);game.resumeGame();
+     const shot=game.projectiles[0],boss=game.monsters[0];shot.x=boss.x;shot.y=boss.y;checkCollisions([], [boss],[shot],game.onHit);assert.equal(boss.hp,324);assert.equal(game.explosions.length,1);renderer.render(game);
+     game.players[0].invincibleTime=0;game.players[0].takeDamage(99);game.players[0].update(3.1,input);assert.ok(game.players[0].ultimateCooldown>0);
+     for(let i=0;i<20;i++)game.onHit(boss,36,false,1,shot);assert.equal(game.explosions.length,config.ULTIMATE.maxEffects);
+   }
+   game.players.forEach(p=>p.setClass('mage'));game.startGame();
+ });
+ check('demon stationary regen is capped, movement resets timer and pause freezes regen',()=>{
+   game.finishQuiz(true);const boss=game.monsters[0];boss.takeDamage(20);boss.phase='REST';boss.timer=3;
+   boss.update(.5,game.players);assert.equal(boss.hp,340);boss.update(.1,game.players);assert.ok(boss.hp>340);boss.hp=boss.maxHp-0.1;boss.update(.1,game.players);assert.equal(boss.hp,boss.maxHp);
+   game.pauseGame();const hp=boss.hp,timer=boss.timer;game.update(10);assert.equal(boss.hp,hp);assert.equal(boss.timer,timer);game.resumeGame();boss.phase='CHASE';boss.update(.05,game.players);assert.equal(boss.stationaryTime,0);
+   game.startGame();
+ });
  const {spawnSync}=require('child_process');
  const siblingPath=path.resolve(root,'../python-mini-game/src/questions.js');
  const reference=JSON.parse(fs.readFileSync(path.join(root,'tests/reference-questions.json'),'utf8'));
@@ -327,8 +355,8 @@ function key(code,down=true,extra={}) { let prevented=false; windowEvents.get(do
  });
  check('nickname HUD and final individual/team scoreboard; replay resets scores',()=>{
    elements['start-button'].click();elements['ready-start-button'].click();assert.equal(elements['p1-name'].textContent,'P1 루나');assert.equal(elements['p2-name'].textContent,'P2 코코');assert.equal(appGame.players[0].classType,'warrior');assert.equal(appGame.players[1].classType,'archer');
-   appGame.players[0].kills=3;appGame.correctAnswers=3;appGame.players[1].kills=2;appGame.players[1].bossKills=1;appGame.finishQuiz(true);
-   assert.equal(elements['result-p1-score'].textContent,'30점');assert.equal(elements['result-p2-score'].textContent,'110점');assert.equal(elements['result-team-score'].textContent,'협력 총점 440점');assert.equal(elements['result-scores'].hidden,false);
+   appGame.players[0].kills=3;appGame.correctAnswers=3;appGame.players[1].kills=2;appGame.players[1].bossKills=1;appGame.finishQuiz(true);appGame.monsters[0].takeDamage(999);appGame.update(0);
+   assert.equal(elements['result-p1-score'].textContent,'30점');assert.equal(elements['result-p2-score'].textContent,'110점');assert.equal(elements['result-team-score'].textContent,'협력 총점 940점');assert.equal(elements['result-scores'].hidden,false);
    elements['result-button'].click();elements['ready-start-button'].click();assert.equal(appGame.totalScore,0);assert.equal(appGame.players[0].nickname,'루나');
  });
  check('changed names/classes refresh HUD even when score and HP match previous game',()=>{

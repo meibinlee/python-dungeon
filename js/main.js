@@ -18,7 +18,7 @@ async function initialize() {
     const input = new Input();
     const renderer = new Renderer(ui.game,assets);
     let game;
-    const quiz = new QuizSystem(final => game.finishQuiz(final),() => game.recordCorrectAnswer());
+    const quiz = new QuizSystem(final => game.finishQuiz(final),() => game.recordCorrectAnswer(),() => game.recordWrongAnswer());
     game = new Game(input,renderer, {
       onState(state) {
         ui['start-screen'].hidden = state !== 'START';
@@ -34,11 +34,11 @@ async function initialize() {
       },
       onHud(players,stage,boss) {
         for (const player of players) ui[`p${player.id}-hp`].textContent = player.hp ? '♥'.repeat(player.hp) + '♡'.repeat(player.maxHp-player.hp) : 'DOWN';
-        ui['stage-number'].textContent = `STAGE ${stage.id}`;
-        ui['stage-name'].textContent = stage.name;
+        ui['stage-number'].textContent = game.battlePhase === 'DEMON' ? `FINAL · ${game.demonAttempts}차 도전` : `STAGE ${stage.id}`;
+        ui['stage-name'].textContent = game.battlePhase === 'DEMON' ? 'PYTHON 마왕 · 정지 중 체력 회복' : stage.name;
         for (const player of players) {
           ui[`p${player.id}-name`].textContent = `P${player.id} ${player.nickname}`;
-          ui[`p${player.id}-power`].textContent = `${CLASSES[player.classType].name} LV ${player.level} · ATK ×${player.attackMultiplier}${player.defenseUp ? ' · 방패 +1' : ''}`;
+          ui[`p${player.id}-power`].textContent = `${CLASSES[player.classType].name} LV ${player.level} · ATK ×${player.attackMultiplier}${player.defenseUp ? ' · 방패 +1' : ''}${game.battlePhase === 'DEMON' ? ` · ${player.id===1?'G':'K'} 궁극기 ${Math.ceil(player.ultimateCooldown)||'준비'}` : ''}`;
           ui[`p${player.id}-score`].textContent = `${game.getScore(player)}점`;
         }
         ui['team-score'].textContent = `협력 총점 ${game.totalScore}`;
@@ -47,7 +47,7 @@ async function initialize() {
           ui['boss-name'].textContent = `${boss.label} · ${boss.weakness ? CLASSES[boss.weakness].name+' 약점 ×3' : '약점 없음'}`;
           ui['boss-hp'].max = boss.maxHp;
           ui['boss-hp'].value = boss.hp;
-          ui['boss-health'].textContent = `${boss.hp} / ${boss.maxHp}`;
+          ui['boss-health'].textContent = `${Math.ceil(boss.hp)} / ${boss.maxHp}`;
           ui['boss-health-fill'].style.transform = `scaleX(${boss.hp/boss.maxHp})`;
           ui['boss-health-trail'].style.transform = `scaleX(${boss.hp/boss.maxHp})`;
         } else {
@@ -65,7 +65,7 @@ async function initialize() {
             ui[`result-p${player.id}-details`].textContent = `일반 적 ${player.kills-player.bossKills}마리 · 보스 ${player.bossKills}마리`;
             ui[`result-p${player.id}-score`].textContent = `${game.getScore(player)}점`;
           }
-          ui['result-quiz-score'].textContent = `공통 퀴즈 정답 ${game.correctAnswers}개 · ${game.correctAnswers*QUIZ_SCORE}점`;
+          ui['result-quiz-score'].textContent = `공통 퀴즈 정답 ${game.correctAnswers}개 · ${game.correctAnswers*QUIZ_SCORE}점 · 마왕 ${game.demonAttempts}차 승리 +${game.demonBonus}점 · 오답 ${game.wrongAnswers}회 / DOWN ${game.deaths}회 감점 −${game.penalty}점`;
           ui['result-team-score'].textContent = `협력 총점 ${game.totalScore}점`;
         }
         ui['result-eyebrow'].textContent = final ? 'CODE QUEST' : 'CORRECT!';

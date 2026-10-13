@@ -1,4 +1,4 @@
-import { GAME_WIDTH, GAME_HEIGHT, ARENA, DIRECTIONS, DAMAGE_NUMBER_TIME, CLASSES } from './config.js';
+import { GAME_WIDTH, GAME_HEIGHT, ARENA, DIRECTIONS, DAMAGE_NUMBER_TIME, CLASSES, ULTIMATE } from './config.js';
 
 const PIXEL_FONT = '"Galmuri11", monospace';
 
@@ -94,6 +94,14 @@ export class Renderer {
     }
     for (const projectile of game.projectiles) this.drawAttack(projectile);
     for (const player of game.players) this.drawPlayer(player);
+    for (const effect of game.explosions) {
+      const size = ULTIMATE.radius*(1-effect.time/ULTIMATE.explosionTime);
+      ctx.globalAlpha=effect.time/ULTIMATE.explosionTime;
+      ctx.fillStyle='#ffb45c'; ctx.fillRect(effect.x-size,effect.y-size,size*2,size*2);
+      ctx.fillStyle='#fff5bd'; ctx.fillRect(effect.x-size/2,effect.y-size/2,size,size);
+      ctx.font=`28px ${PIXEL_FONT}`; ctx.textAlign='center'; ctx.fillText('펑!',effect.x,effect.y-20);
+      ctx.globalAlpha=1;
+    }
     for (const effect of game.damageEffects) this.drawDamageNumber(effect);
     if (game.state === 'QUIZ' || game.state === 'STAGE_CLEAR') this.drawTeacher();
     if (game.restartNotice > 0) {
@@ -188,6 +196,15 @@ export class Renderer {
   drawAttack(attack) {
     const ctx=this.ctx,x=Math.round(attack.x/4)*4,y=Math.round(attack.y/4)*4;
     const horizontal=attack.direction==='left'||attack.direction==='right';
+    if (attack.ultimate) {
+      const colors={warrior:'#ffe18d',archer:'#ff946d',mage:'#c7a2ff'};
+      ctx.fillStyle=colors[attack.classType];ctx.fillRect(x,y,36,36);
+      ctx.fillStyle='#fff5df';
+      if(attack.classType==='warrior') {ctx.fillRect(x+14,y+2,8,30);ctx.fillRect(x+5,y+22,26,6);}
+      else if(attack.classType==='archer') {ctx.fillRect(x+6,y+10,24,16);ctx.fillStyle='#67475a';ctx.fillRect(x+22,y+12,8,12);}
+      else {ctx.fillRect(x+8,y+8,20,20);ctx.fillStyle='#8063cb';ctx.fillRect(x+14,y+14,8,8);}
+      return;
+    }
     if(attack.classType==='warrior') {
       ctx.fillStyle='#fff4bd';
       if(horizontal) {ctx.fillRect(x+20,y,12,attack.height);ctx.fillRect(x+36,y+8,8,attack.height-16);ctx.fillRect(x+48,y+20,8,attack.height-40);}
@@ -218,8 +235,8 @@ export class Renderer {
     const y=Math.round(effect.y-progress*35);
     ctx.globalAlpha=Math.min(1,effect.time/.2);
     ctx.textAlign='center';ctx.font=`${effect.damage>1?26:22}px ${PIXEL_FONT}`;
-    ctx.strokeStyle='#623744';ctx.lineWidth=4;ctx.strokeText(`-${effect.damage}`,effect.x,y);
-    ctx.fillStyle=effect.isPlayer?'#ffb6b6':effect.damage>1?'#ffe18d':'#fff5cd';ctx.fillText(`-${effect.damage}`,effect.x,y);
+    ctx.strokeStyle='#623744';ctx.lineWidth=4;ctx.strokeText(`-${Number(effect.damage.toFixed(1))}`,effect.x,y);
+    ctx.fillStyle=effect.isPlayer?'#ffb6b6':effect.damage>1?'#ffe18d':'#fff5cd';ctx.fillText(`-${Number(effect.damage.toFixed(1))}`,effect.x,y);
     ctx.globalAlpha=1;
   }
   drawMonster(monster,accent) {
@@ -272,9 +289,9 @@ export class Renderer {
     ctx.fillStyle='#efd6a4';ctx.fillRect(x+24,y-12,24,28);ctx.fillRect(x+112,y-12,24,28);ctx.fillRect(x+24,y+12,112,8);
     ctx.fillStyle='#302846';ctx.fillRect(x+20,y+32,120,64);
     ctx.fillStyle='#ffe79d';ctx.fillRect(x+40,y+44,20,12);ctx.fillRect(x+100,y+44,20,12);
-    ctx.font=`26px ${PIXEL_FONT}`;ctx.textAlign='center';ctx.fillText(boss.weakness==='warrior'?'[ ROOT ]':boss.weakness==='mage'?'[ + − ]':boss.weakness==='archer'?'[ IF ]':'{ ∞ }',x+80,y+85);
+    ctx.font=`26px ${PIXEL_FONT}`;ctx.textAlign='center';ctx.fillText(boss.weakness==='warrior'?'[ ROOT ]':boss.weakness==='mage'?'[ + − ]':boss.weakness==='archer'?'[ IF ]':boss.isDemon?'PYTHON':'{ ∞ }',x+80,y+85);
     this.drawHealthBar(boss,x-12,y-24,184,12);
-    ctx.font=`18px ${PIXEL_FONT}`;ctx.fillStyle='#fff8d8';ctx.fillText(boss.phase==='WINDUP'?'돌진 준비! 옆으로 피하세요!':boss.label,x+80,y-40);
+    ctx.font=`18px ${PIXEL_FONT}`;ctx.fillStyle='#fff8d8';ctx.fillText(boss.phase==='WINDUP'?'돌진 준비! 옆으로 피하세요!':boss.isDemon && boss.stationaryTime>0.5?'체력 회복 중! 궁극기로 공격!':boss.label,x+80,y-40);
   }
   drawTeacher() {
     const ctx = this.ctx;

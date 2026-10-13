@@ -1,9 +1,9 @@
-import { DIRECTIONS, ARENA, CLASSES } from '../core/config.js';
+import { DIRECTIONS, ARENA, CLASSES, ULTIMATE } from '../core/config.js';
 export class Projectile {
-  constructor(player) {
+  constructor(player, ultimate = false) {
     const [dx,dy] = DIRECTIONS[player.direction];
     const role = CLASSES[player.classType];
-    const melee = player.classType === 'warrior';
+    const melee = !ultimate && player.classType === 'warrior';
     const width = role.size;
     const height = role.size;
     Object.assign(this, { x:player.x+player.width/2-width/2+dx*(melee?role.reach:24), y:player.y+player.height/2-height/2+dy*(melee?role.reach:24), width,height, velocityX:dx*role.speed, velocityY:dy*role.speed, damage:role.damage*player.attackMultiplier, lifetime:role.lifetime, owner:player.id, color:player.color, active:true, classType:player.classType, direction:player.direction });
@@ -12,6 +12,14 @@ export class Projectile {
     this.range = role.range ?? Infinity;
     this.reach = role.reach;
     this.damageSteps = role.damageSteps || [];
+    this.ultimate = ultimate;
+    if (ultimate) {
+      this.player = null; this.damageSteps = []; this.range = ULTIMATE.range;
+      this.width = this.height = ULTIMATE.size;
+      this.damage = ULTIMATE.damage; // Fixed ultimate damage; items boost normal attacks only.
+      this.velocityX = dx*ULTIMATE.speed; this.velocityY = dy*ULTIMATE.speed;
+      this.lifetime = ULTIMATE.range/ULTIMATE.speed+0.1;
+    }
   }
   getDamage() {
     // Distance is measured from the launch point, unaffected by the shooter moving later.

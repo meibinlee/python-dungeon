@@ -53,7 +53,7 @@
             <div class="blue"><strong id="ready-p1-name">PLAYER 1</strong><p><kbd>W A S D</kbd> : MOVE</p><p><kbd>F</kbd> : ATTACK</p></div>
             <div class="yellow"><strong id="ready-p2-name">PLAYER 2</strong><p><kbd>↑ ← ↓ →</kbd> : MOVE</p><p><kbd>L</kbd> : ATTACK</p></div>
           </div>
-          <p>이동한 방향으로 공격합니다. 공격 키를 누르고 있어도 됩니다.</p>
+          <p>이동한 방향으로 공격합니다. 공격 키를 누르고 있어도 됩니다.<br>마왕 전투 궁극기: P1 G · P2 K (8초마다, 정면 발사)<br>최종 퀴즈 뒤 PYTHON 마왕을 쓰러뜨리면 CLEAR!</p>
           <p>전사: 근접 강공격 · 궁수: 원거리에서 강해져요.<br>마법사: 중거리까지만 공격하며 멀수록 강해져요.</p>
           <p>Esc 또는 일시정지 버튼으로 전투를 멈출 수 있습니다.</p>
           <p>각 단계에 검·방패·물약은 하나씩! 서로 양보하며 사용하세요.</p>
@@ -82,7 +82,7 @@
         <section class="panel result-panel" role="dialog" aria-modal="true" aria-labelledby="result-title">
           <p id="result-eyebrow" class="eyebrow"></p><h2 id="result-title"></h2>
           <p id="result-message"></p>
-          <div id="result-scores" hidden><div class="scoreboard"><div class="score-card"><strong id="result-p1-name"></strong><p id="result-p1-details"></p><strong id="result-p1-score"></strong></div><div class="score-card"><strong id="result-p2-name"></strong><p id="result-p2-details"></p><strong id="result-p2-score"></strong></div></div><p id="result-quiz-score"></p><strong id="result-team-score"></strong><p class="score-rule">일반 적 10점 · 보스 100점 · 정답 100점<br>퀴즈 정답 점수는 두 플레이어의 공통 점수입니다.</p></div>
+          <div id="result-scores" hidden><div class="scoreboard"><div class="score-card"><strong id="result-p1-name"></strong><p id="result-p1-details"></p><strong id="result-p1-score"></strong></div><div class="score-card"><strong id="result-p2-name"></strong><p id="result-p2-details"></p><strong id="result-p2-score"></strong></div></div><p id="result-quiz-score"></p><strong id="result-team-score"></strong><p class="score-rule">일반 적 10점 · 보스 100점 · 정답 100점<br>마왕 보너스: 첫 도전 500점, 재도전마다 −100점 (최소 100점)<br>오답·DOWN은 각각 첫 2회 무료, 이후 매회 −10점 (재도전에도 누적). 총점 최소 0점.</p></div>
           <button id="result-button">NEXT STAGE</button>
         </section>
       </div>

@@ -1799,3 +1799,18 @@ Suggested next implementation order: final-quiz → demon → clear state transi
 ## Handoff publication status
 
 During this handoff, local Git writes failed (`.git/index.lock`: Operation not permitted). CLI GitHub API network access also failed. The connected GitHub tool could read the remote file, but updating it returned 403 `Resource not accessible by integration`. Therefore this AGENTS.md handoff is saved locally but has NOT been committed or pushed by the assistant. The user can run `bash ./deploy-github.sh` in their terminal to verify, commit and push it. No pending roadmap features were implemented during this turn.
+
+
+# 71. Implementation update (2026-10-13)
+
+This section supersedes sections 69–70 where they describe pending roadmap behavior.
+
+- Final Quiz 3 correct answers now starts `battlePhase: DEMON`; only demon defeat calls GAME_CLEAR/result scoreboard.
+- PYTHON 마왕: HP 360, speed 125, touch damage 2, chase 2.4s → windup 0.65s → charge 0.6s at speed 520 → rest 1.4s. Regenerates 6 HP/s after actual position stays stationary >0.5s, capped at max. Pause freezes regeneration/timers.
+- Final-only G / K ultimates through centralized Input, all abilities: fixed 36 damage, speed 720, range 1100, cooldown 8s. Warrior ranged sword, archer bazooka, mage long magic. Items do not multiply ultimates. Bounded 0.35s explosion ‘펑’ visuals (max 8), no extra AoE damage. Normal attacks unchanged.
+- Solo respawn preserves buffs and remaining ultimate cooldown. Both DOWN retries only demon with full player/boss HP and fresh ultimates, preserving prior scores/final quiz. Final attempt number increments.
+- First-attempt victory interpreted as first encounter victory, not one-hit kill. Team bonus 500, decrement 100 per failed attempt, floor 100. Demon also awards existing last-hit boss 100 points.
+- Wrong answers and individual DOWN each get first 2 free, then team penalty 10 per event. Counters survive stage rollback/demon retry; total floor 0; new run resets. UI/README explain rules.
+- Config contains balance constants; no new dependencies/assets/network requests/animation chains.
+- `node --experimental-vm-modules tests/check-game.cjs`: 59 checks passed including prior Python validation and new final flow/penalty/ultimate/regen checks. DOM/Canvas substitutes only; no real browser combat/balance/FPS claim. Real school-device playtesting remains.
+- Changes saved locally; this development turn did not commit/push/deploy. Historical section 70 pending values are now resolved with initial balance above.

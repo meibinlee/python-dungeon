@@ -8,7 +8,7 @@ export function checkCollisions(players,monsters,projectiles,onHit) {
     for (const monster of monsters) {
       if (monster.active && overlaps(projectile,monster)) {
         const damage = monster.takeDamage(projectile.getDamage() * (monster.isBoss && monster.weakness === projectile.classType ? BOSS_WEAKNESS_MULTIPLIER : 1));
-        if (damage) onHit?.(monster,damage,false,projectile.owner);
+        if (damage) onHit?.(monster,damage,false,projectile.owner,projectile);
         projectile.active = false; break;
       }
     }

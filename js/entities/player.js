@@ -1,4 +1,4 @@
-import { ARENA, PLAYER_SPEED, PLAYER_MAX_HP, PLAYER_SIZE, ATTACK_COOLDOWN, INVINCIBLE_TIME, RESPAWN_TIME, LEVEL_SPEED_BONUS, LEVEL_COOLDOWN_BONUS, CLASSES } from '../core/config.js';
+import { ARENA, PLAYER_SPEED, PLAYER_MAX_HP, PLAYER_SIZE, ATTACK_COOLDOWN, INVINCIBLE_TIME, RESPAWN_TIME, LEVEL_SPEED_BONUS, LEVEL_COOLDOWN_BONUS, CLASSES, ULTIMATE } from '../core/config.js';
 import { clamp } from '../core/utils.js';
 import { Projectile } from './projectile.js';
 
@@ -19,13 +19,16 @@ export class Player {
     this.attackInterval = ATTACK_COOLDOWN - (level-1)*LEVEL_COOLDOWN_BONUS;
   }
   reset(keepPower = false) {
+    const ultimateCooldown = keepPower ? this.ultimateCooldown : 0;
     const attackMultiplier = keepPower ? this.attackMultiplier : 1;
     if (!keepPower) { this.maxHp = PLAYER_MAX_HP; this.defenseUp = false; }
-    Object.assign(this, { x:this.spawnX, y:this.spawnY, hp:this.maxHp, active:true, direction:'up', attackCooldown:0, invincibleTime:INVINCIBLE_TIME, respawnTime:0 });
+    Object.assign(this, { x:this.spawnX, y:this.spawnY, hp:this.maxHp, active:true, direction:'up', attackCooldown:0, invincibleTime:INVINCIBLE_TIME, respawnTime:0, ultimateCooldown:0 });
     this.attackMultiplier = attackMultiplier;
+    this.ultimateCooldown = ultimateCooldown;
     Object.assign(this,{ hurtTime:0, walkTime:0, moving:false });
   }
   update(dt, input) {
+    this.ultimateCooldown = Math.max(0,this.ultimateCooldown-dt);
     this.hurtTime = Math.max(0,this.hurtTime-dt);
     if (!this.active) {
       this.respawnTime -= dt;
@@ -49,6 +52,11 @@ export class Player {
     if (!this.active || this.attackCooldown > 0) return null;
     this.attackCooldown = this.attackInterval;
     return new Projectile(this);
+  }
+  useUltimate() {
+    if (!this.active || this.ultimateCooldown > 0) return null;
+    this.ultimateCooldown = ULTIMATE.cooldown;
+    return new Projectile(this,true);
   }
   takeDamage(damage = 1) {
     if (!this.active || this.invincibleTime > 0) return 0;

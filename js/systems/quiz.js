@@ -31,11 +31,12 @@ export function validateQuestions(questions) {
 }
 
 export class QuizSystem {
-  constructor(onComplete,onCorrect = () => {}) {
+  constructor(onComplete,onCorrect = () => {},onWrong = () => {}) {
     validateQuestions(QUESTIONS);
     this.resetRun();
     this.onComplete = onComplete;
     this.onCorrect = onCorrect;
+    this.onWrong = onWrong;
     this.ui = Object.fromEntries(['quiz-screen','quiz-title','quiz-code','quiz-choices','quiz-feedback','quiz-progress','quiz-continue'].map(id => [id, document.getElementById(id)]));
     this.ui['quiz-continue'].addEventListener('click', () => this.continueQuiz());
   }
@@ -100,6 +101,7 @@ export class QuizSystem {
       if (this.final) this.solved.add(this.question.id);
       feedback.textContent = this.final ? `CORRECT!\n${this.solved.size} / 3 문제 해결!` : 'CORRECT!\nSTAGE CLEAR!';
     } else {
+      this.onWrong();
       feedback.classList.add('wrong');
       feedback.textContent = 'WRONG!\n다시 생각해 보세요!';
     }
