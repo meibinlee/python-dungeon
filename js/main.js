@@ -9,6 +9,7 @@ async function initialize() {
   const ids = ['game','start-screen','start-button','loading-message','ready-screen','ready-start-button','ready-back-button','pause-screen','pause-button','resume-button','home-button','hud','p1-hp','p2-hp','stage-number','stage-name','result-screen','result-eyebrow','result-title','result-message','result-button'];
   ids.push('p1-power','p2-power','boss-hud','boss-name','boss-hp','boss-health','boss-health-trail','boss-health-fill');
   ids.push('p1-nickname','p2-nickname','ready-p1-name','ready-p2-name','p1-name','p2-name','p1-score','p2-score','team-score','result-scores','result-p1-name','result-p2-name','result-p1-details','result-p2-details','result-p1-score','result-p2-score','result-team-score');
+  ids.push('final-ready-screen','final-start-button');
   ids.push('p1-class','p2-class','p1-preview','p2-preview','result-quiz-score');
   for (const id of [1,2]) for (const type of Object.keys(CLASSES)) ids.push(`p${id}-${type}`);
   const ui = Object.fromEntries(ids.map(id => [id,document.getElementById(id)]));
@@ -23,13 +24,14 @@ async function initialize() {
       onState(state) {
         ui['start-screen'].hidden = state !== 'START';
         ui['ready-screen'].hidden = state !== 'READY';
+        ui['final-ready-screen'].hidden = state !== 'FINAL_READY';
         ui['pause-screen'].hidden = state !== 'PAUSED';
         ui['pause-button'].hidden = state !== 'PLAYING';
         ui.hud.hidden = state === 'START' || state === 'READY';
         if (state === 'START' || state === 'READY') ui['boss-hud'].hidden = true;
         if (state !== 'QUIZ') quiz.hide();
         ui['result-screen'].hidden = state !== 'STAGE_CLEAR' && state !== 'GAME_CLEAR';
-        const focus = { START:'start-button', READY:'ready-start-button', PAUSED:'resume-button', PLAYING:'game' }[state];
+        const focus = { START:'start-button', READY:'ready-start-button', FINAL_READY:'final-start-button', PAUSED:'resume-button', PLAYING:'game' }[state];
         if (focus) ui[focus].focus({ preventScroll:true });
       },
       onHud(players,stage,boss) {
@@ -109,6 +111,7 @@ async function initialize() {
       // Empty in MVP; optional assets never block play and are cached once.
       void assets.preload(LATER_ASSETS);
     });
+    ui['final-start-button'].addEventListener('click', () => game.beginFinalBattle());
     ui['ready-back-button'].addEventListener('click', () => game.returnToStart());
     ui['pause-button'].addEventListener('click', () => game.pauseGame());
     ui['resume-button'].addEventListener('click', () => game.resumeGame());

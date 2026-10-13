@@ -108,6 +108,7 @@ export class Game {
     this.battlePhase = 'BOSS';
     this.updateHud();
   }
+  beginFinalBattle() { if (this.state === 'FINAL_READY') this.startDemonBattle(); }
   startDemonBattle() {
     this.demonAttempts++;
     this.battlePhase = 'DEMON';
@@ -121,7 +122,7 @@ export class Game {
     this.setState('GAME_CLEAR'); this.updateHud(); this.events.onResult(true,true);
   }
   finishQuiz(final) {
-    if (final) { this.startDemonBattle(); return; }
+    if (final) { this.setState('FINAL_READY'); return; }
     this.setState('STAGE_CLEAR');
     this.events.onResult(final,this.stages.isLast);
   }

@@ -1814,3 +1814,12 @@ This section supersedes sections 69–70 where they describe pending roadmap beh
 - Config contains balance constants; no new dependencies/assets/network requests/animation chains.
 - `node --experimental-vm-modules tests/check-game.cjs`: 59 checks passed including prior Python validation and new final flow/penalty/ultimate/regen checks. DOM/Canvas substitutes only; no real browser combat/balance/FPS claim. Real school-device playtesting remains.
 - Changes saved locally; this development turn did not commit/push/deploy. Historical section 70 pending values are now resolved with initial balance above.
+
+
+# 72. Character visual update (2026-10-13)
+
+User requested Chiikawa motifs: warrior=Chiikawa, archer=Hachiware, mage=Usagi. `Renderer.getHeroSprite` now draws cached 32×40 Canvas pixel characters with white/blue/cream fur and recognizable ears/face plus sword+shield/bow/staff. Team colors remain equipment accents. Preview/combat share sprites. No new assets, network requests or collision/stat changes. Section 69's human layered-hair sprite description is superseded.
+
+# 73. Final battle briefing (2026-10-13)
+
+Final quiz completion enters FINAL_READY. Dedicated modal explains G/K ultimates, 8s cooldown, facing direction and demon regeneration/charge; explicit start button calls guarded beginFinalBattle. No simulation/input or attempt count before confirmation; retry remains immediate. Other difficulty/mechanics unchanged per user playtest feedback. 60 automated checks pass, including briefing freeze/button wiring.
