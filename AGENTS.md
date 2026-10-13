@@ -1823,3 +1823,7 @@ User requested Chiikawa motifs: warrior=Chiikawa, archer=Hachiware, mage=Usagi. 
 # 73. Final battle briefing (2026-10-13)
 
 Final quiz completion enters FINAL_READY. Dedicated modal explains G/K ultimates, 8s cooldown, facing direction and demon regeneration/charge; explicit start button calls guarded beginFinalBattle. No simulation/input or attempt count before confirmation; retry remains immediate. Other difficulty/mechanics unchanged per user playtest feedback. 60 automated checks pass, including briefing freeze/button wiring.
+
+# 74. Demon visual update (2026-10-13)
+
+PYTHON demon uses reference-inspired fluffy white one-horn creature with oversized eyes, pink cheeks, green tail and PYTHON belly label. Renderer caches three 48×40 Canvas poses (idle/windup/hit), scaled to 192×160; hitbox stays 160×112. Stage bosses, AI/stats, charge telegraph and combat unchanged. No network assets during gameplay.

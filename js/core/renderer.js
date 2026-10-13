@@ -9,6 +9,7 @@ export class Renderer {
     this.assets = assets;
     this.background = null;
     this.heroSprites = new Map();
+    this.demonSprites = new Map();
   }
   prepareBackground(stage) {
     // Cache static floor artwork once per stage; active gameplay still uses one visible Canvas.
@@ -292,6 +293,12 @@ export class Renderer {
     if(boss.phase==='WINDUP') {
       ctx.strokeStyle='#ffec8e';ctx.lineWidth=10;ctx.beginPath();ctx.moveTo(x+80,y+56);ctx.lineTo(x+80+boss.chargeX*220,y+56+boss.chargeY*220);ctx.stroke();
     }
+    if (boss.isDemon) {
+      const pose=boss.hitTime>0?'HIT':boss.phase==='WINDUP'?'WINDUP':'IDLE';
+      ctx.fillStyle='#33305755';ctx.fillRect(x-12,y+100,184,16);
+      ctx.drawImage(this.getDemonSprite(pose),x-16,y-40,192,160);
+      ctx.font=`14px ${PIXEL_FONT}`;ctx.textAlign='center';ctx.fillStyle='#6c5772';ctx.fillText('PYTHON',x+80,y+89);
+    } else {
     ctx.fillStyle='#333057';ctx.fillRect(x-8,y+100,176,20);
     ctx.fillStyle=boss.hitTime>0?'#fff5bb':boss.phase==='WINDUP'?'#ee927f':boss.tint;
     ctx.fillRect(x,y+16,160,96);ctx.fillRect(x+16,y,128,112);
@@ -299,8 +306,45 @@ export class Renderer {
     ctx.fillStyle='#302846';ctx.fillRect(x+20,y+32,120,64);
     ctx.fillStyle='#ffe79d';ctx.fillRect(x+40,y+44,20,12);ctx.fillRect(x+100,y+44,20,12);
     ctx.font=`26px ${PIXEL_FONT}`;ctx.textAlign='center';ctx.fillText(boss.weakness==='warrior'?'[ ROOT ]':boss.weakness==='mage'?'[ + − ]':boss.weakness==='archer'?'[ IF ]':boss.isDemon?'PYTHON':'{ ∞ }',x+80,y+85);
-    this.drawHealthBar(boss,x-12,y-24,184,12);
-    ctx.font=`18px ${PIXEL_FONT}`;ctx.fillStyle='#fff8d8';ctx.fillText(boss.phase==='WINDUP'?'돌진 준비! 옆으로 피하세요!':boss.isDemon && boss.stationaryTime>0.5?'체력 회복 중! 궁극기로 공격!':boss.label,x+80,y-40);
+    }
+    this.drawHealthBar(boss,x-12,y-(boss.isDemon?52:24),184,12);
+    ctx.font=`18px ${PIXEL_FONT}`;ctx.fillStyle='#fff8d8';ctx.fillText(boss.phase==='WINDUP'?'돌진 준비! 옆으로 피하세요!':boss.isDemon && boss.stationaryTime>0.5?'체력 회복 중! 궁극기로 공격!':boss.label,x+80,y-(boss.isDemon?68:40));
+  }
+  getDemonSprite(pose='IDLE') {
+    if (this.demonSprites.has(pose)) return this.demonSprites.get(pose);
+    const sprite=document.createElement('canvas');sprite.width=48;sprite.height=40;
+    const ctx=sprite.getContext('2d');
+    const rect=(c,x,y,w,h)=>{ctx.fillStyle=c;ctx.fillRect(x,y,w,h);};
+    const ink='#493e43',fur=pose==='HIT'?'#fff3b9':pose==='WINDUP'?'#ffe1da':'#fffdf1';
+    // Reference-inspired fluffy one-horn creature, original cached pixel drawing.
+    // Tail sits behind the body; visual silhouette never changes collision bounds.
+    rect(ink,38,24,6,13);rect(ink,41,18,5,14);rect(ink,44,12,4,11);
+    rect('#809969',39,25,4,11);rect('#809969',42,19,3,11);rect('#809969',45,13,2,8);
+    rect('#e5e8d0',40,27,2,7);rect('#e5e8d0',43,22,2,5);rect('#e5e8d0',45,17,2,3);
+    rect(ink,8,2,7,9);rect(ink,32,3,7,8);rect(fur,9,3,5,8);rect(fur,33,4,5,7);
+    rect(ink,12,7,23,25);rect(ink,7,10,33,20);rect(ink,4,14,38,11);
+    rect(ink,2,15,5,4);rect(ink,1,21,6,4);rect(ink,4,27,7,5);
+    rect(ink,38,15,6,5);rect(ink,39,22,6,5);rect(ink,35,28,7,5);
+    rect(fur,12,8,23,23);rect(fur,8,11,31,18);rect(fur,5,15,36,9);
+    rect(fur,3,16,5,2);rect(fur,2,22,6,2);rect(fur,5,28,6,2);
+    rect(fur,38,16,5,3);rect(fur,39,23,5,3);rect(fur,35,29,6,2);
+    // Single warm horn and two oversized softly shining eyes.
+    rect(ink,22,5,3,3);rect(ink,21,8,5,5);rect('#edbc88',23,6,1,5);rect('#edbc88',22,9,3,3);
+    rect(ink,10,15,9,9);rect(ink,28,15,9,9);
+    rect('#ffffff',11,16,7,6);rect('#ffffff',29,16,7,6);
+    rect('#ded0bc',13,18,5,5);rect('#ded0bc',29,18,5,5);
+    rect(ink,15,20,2,3);rect(ink,30,20,2,3);
+    rect('#ffffff',14,18,2,2);rect('#ffffff',31,18,2,2);
+    rect('#efb3bd',7,24,8,3);rect('#efb3bd',33,24,8,3);
+    rect('#ba7e91',9,25,1,1);rect('#ba7e91',12,25,1,1);rect('#ba7e91',35,25,1,1);rect('#ba7e91',38,25,1,1);
+    rect(ink,21,24,2,1);rect(ink,25,24,2,1);rect(ink,22,25,4,4);
+    rect('#eb99a7',23,26,2,2);
+    if (pose==='WINDUP') {rect(ink,11,14,7,1);rect(ink,29,14,7,1);}
+    // Round body, tiny paws and cream belly leave room for the PYTHON label.
+    rect(ink,12,29,23,9);rect(fur,13,29,21,8);
+    rect(ink,10,35,8,5);rect(ink,29,35,8,5);rect(fur,11,36,6,3);rect(fur,30,36,6,3);
+    rect('#f1e7d5',18,31,12,5);rect('#e5d7be',15,38,2,1);rect('#e5d7be',32,38,2,1);
+    this.demonSprites.set(pose,sprite);return sprite;
   }
   drawTeacher() {
     const ctx = this.ctx;
