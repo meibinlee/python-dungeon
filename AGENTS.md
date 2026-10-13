@@ -1827,3 +1827,7 @@ Final quiz completion enters FINAL_READY. Dedicated modal explains G/K ultimates
 # 74. Demon visual update (2026-10-13)
 
 PYTHON demon uses reference-inspired fluffy white one-horn creature with oversized eyes, pink cheeks, green tail and PYTHON belly label. Renderer caches three 48×40 Canvas poses (idle/windup/hit), scaled to 192×160; hitbox stays 160×112. Stage bosses, AI/stats, charge telegraph and combat unchanged. No network assets during gameplay.
+
+# 75. Demon pixel style refinement (2026-10-13)
+
+User supplied three hero pixel/cross-stitch references. Demon drawing now matches their thin brown outlines, round stepped cheeks, diagonal sparkling small eyes, striped pink blush and flat cream fill. Original monster single horn/green tail retained. Only demon rendering/docs changed; cached poses, hitbox, gameplay and hero art untouched.

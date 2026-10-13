@@ -315,35 +315,45 @@ export class Renderer {
     const sprite=document.createElement('canvas');sprite.width=48;sprite.height=40;
     const ctx=sprite.getContext('2d');
     const rect=(c,x,y,w,h)=>{ctx.fillStyle=c;ctx.fillRect(x,y,w,h);};
-    const ink='#493e43',fur=pose==='HIT'?'#fff3b9':pose==='WINDUP'?'#ffe1da':'#fffdf1';
-    // Reference-inspired fluffy one-horn creature, original cached pixel drawing.
-    // Tail sits behind the body; visual silhouette never changes collision bounds.
-    rect(ink,38,24,6,13);rect(ink,41,18,5,14);rect(ink,44,12,4,11);
-    rect('#809969',39,25,4,11);rect('#809969',42,19,3,11);rect('#809969',45,13,2,8);
-    rect('#e5e8d0',40,27,2,7);rect('#e5e8d0',43,22,2,5);rect('#e5e8d0',45,17,2,3);
-    rect(ink,8,2,7,9);rect(ink,32,3,7,8);rect(fur,9,3,5,8);rect(fur,33,4,5,7);
-    rect(ink,12,7,23,25);rect(ink,7,10,33,20);rect(ink,4,14,38,11);
-    rect(ink,2,15,5,4);rect(ink,1,21,6,4);rect(ink,4,27,7,5);
-    rect(ink,38,15,6,5);rect(ink,39,22,6,5);rect(ink,35,28,7,5);
-    rect(fur,12,8,23,23);rect(fur,8,11,31,18);rect(fur,5,15,36,9);
-    rect(fur,3,16,5,2);rect(fur,2,22,6,2);rect(fur,5,28,6,2);
-    rect(fur,38,16,5,3);rect(fur,39,23,5,3);rect(fur,35,29,6,2);
-    // Single warm horn and two oversized softly shining eyes.
-    rect(ink,22,5,3,3);rect(ink,21,8,5,5);rect('#edbc88',23,6,1,5);rect('#edbc88',22,9,3,3);
-    rect(ink,10,15,9,9);rect(ink,28,15,9,9);
-    rect('#ffffff',11,16,7,6);rect('#ffffff',29,16,7,6);
-    rect('#ded0bc',13,18,5,5);rect('#ded0bc',29,18,5,5);
-    rect(ink,15,20,2,3);rect(ink,30,20,2,3);
-    rect('#ffffff',14,18,2,2);rect('#ffffff',31,18,2,2);
-    rect('#efb3bd',7,24,8,3);rect('#efb3bd',33,24,8,3);
-    rect('#ba7e91',9,25,1,1);rect('#ba7e91',12,25,1,1);rect('#ba7e91',35,25,1,1);rect('#ba7e91',38,25,1,1);
-    rect(ink,21,24,2,1);rect(ink,25,24,2,1);rect(ink,22,25,4,4);
-    rect('#eb99a7',23,26,2,2);
-    if (pose==='WINDUP') {rect(ink,11,14,7,1);rect(ink,29,14,7,1);}
-    // Round body, tiny paws and cream belly leave room for the PYTHON label.
-    rect(ink,12,29,23,9);rect(fur,13,29,21,8);
-    rect(ink,10,35,8,5);rect(ink,29,35,8,5);rect(fur,11,36,6,3);rect(fur,30,36,6,3);
-    rect('#f1e7d5',18,31,12,5);rect('#e5d7be',15,38,2,1);rect('#e5d7be',32,38,2,1);
+    const ink='#50372c',fur=pose==='HIT'?'#fff0ac':pose==='WINDUP'?'#ffe7dc':'#fffef2';
+    const blush='#eea0b3',blushShade='#be6b82';
+    // Match the supplied cross-stitch pixel references: single-pixel brown
+    // contour, rounded stepped silhouette, diagonal eye glints, striped blush.
+    // Green curled tail and one horn preserve the original monster motif.
+    rect(ink,37,27,5,10);rect(ink,40,22,5,11);rect(ink,43,16,4,11);rect(ink,45,11,3,9);
+    rect('#87a16e',38,28,3,8);rect('#87a16e',41,23,3,9);rect('#87a16e',44,17,2,8);rect('#87a16e',46,12,1,7);
+    rect('#f6f3dd',39,29,2,5);rect('#f6f3dd',42,25,2,4);rect('#f6f3dd',45,19,1,3);
+    // Rounded ears above a broad cheek silhouette.
+    rect(ink,10,2,5,1);rect(ink,9,3,7,5);rect(fur,10,3,5,5);
+    rect(ink,31,2,5,1);rect(ink,30,3,7,5);rect(fur,31,3,5,5);
+    const headRows=[[7,15,31],[8,12,34],[9,10,36],[10,9,37],[11,8,38],
+      [12,7,39],[13,6,40],[14,5,41],[15,5,41],[16,4,42],[17,4,42],
+      [18,3,43],[19,4,42],[20,4,42],[21,3,43],[22,4,42],[23,4,42],
+      [24,5,41],[25,5,41],[26,6,40],[27,7,39],[28,9,37],[29,12,34],[30,15,31]];
+    for(const [y,left,right] of headRows) {
+      rect(ink,left,y,right-left+1,1);
+      if(y!==7&&y!==30)rect(fur,left+1,y,right-left-1,1);
+    }
+    // Soft orange tapered horn, not a square helmet.
+    rect(ink,22,5,2,2);rect(ink,21,7,4,2);rect(ink,20,9,6,3);
+    rect('#efc48a',22,7,2,2);rect('#efc48a',21,9,4,2);rect('#ffe1ae',22,9,1,2);
+    // Small diagonal dark eyes and a two-pixel highlight, like the references.
+    for(const eyeX of [12,29]) {
+      rect(ink,eyeX+2,16,3,2);rect(ink,eyeX+1,18,5,2);
+      rect(ink,eyeX,20,5,2);rect(ink,eyeX+1,22,2,1);
+      rect('#ffffff',eyeX+3,18,2,2);rect('#ffffff',eyeX+1,20,1,1);
+      rect(ink,eyeX+2,13,2,1);
+    }
+    rect(blush,7,22,7,3);rect(blush,33,22,7,3);
+    for(const x of [8,11,34,37])rect(blushShade,x,22,1,3);
+    rect(ink,21,23,1,1);rect(ink,25,23,1,1);rect(ink,22,24,3,1);
+    rect(ink,22,25,3,3);rect('#e996a6',23,25,1,2);
+    if(pose==='WINDUP') {rect(ink,12,14,5,1);rect(ink,29,14,5,1);}
+    // Small round torso and tiny feet, with flat cream fill instead of shading.
+    rect(ink,14,29,19,9);rect(fur,15,29,17,8);
+    rect(ink,12,30,3,4);rect(fur,13,30,2,3);rect(ink,32,30,3,4);rect(fur,32,30,2,3);
+    rect(ink,15,37,6,3);rect(ink,26,37,6,3);
+    rect(fur,16,37,4,2);rect(fur,27,37,4,2);
     this.demonSprites.set(pose,sprite);return sprite;
   }
   drawTeacher() {
