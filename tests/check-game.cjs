@@ -27,7 +27,7 @@ async function moduleAt(file) {
   if(cache.has(file)) return cache.get(file);
   const module=new vm.SourceTextModule(fs.readFileSync(file,'utf8'),{context,identifier:file});
   cache.set(file,module);
-  await module.link((specifier,ref)=>moduleAt(path.resolve(path.dirname(ref.identifier),specifier)));
+  await module.link((specifier,ref)=>moduleAt(path.resolve(path.dirname(ref.identifier),specifier.split('?')[0])));
   return module;
 }
 async function load(relative) { const module=await moduleAt(path.join(root,relative)); if(module.status!=='evaluated') await module.evaluate(); return module.namespace; }

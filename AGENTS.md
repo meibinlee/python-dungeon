@@ -1831,3 +1831,7 @@ PYTHON demon uses reference-inspired fluffy white one-horn creature with oversiz
 # 75. Demon pixel style refinement (2026-10-13)
 
 User supplied three hero pixel/cross-stitch references. Demon drawing now matches their thin brown outlines, round stepped cheeks, diagonal sparkling small eyes, striped pink blush and flat cream fill. Original monster single horn/green tail retained. Only demon rendering/docs changed; cached poses, hitbox, gameplay and hero art untouched.
+
+# 76. Cache refresh (2026-10-13)
+
+Live renderer fetched and byte-compared with local: latest demon art was deployed. Added matching version query to index main script and main Renderer import (`20261013-pixel2`) to refresh entry/renderer browser caches. VM test loader ignores URL query for filesystem resolution. Latest visual refinement affects demon only; heroes are unchanged.
