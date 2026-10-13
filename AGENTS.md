@@ -1835,3 +1835,26 @@ User supplied three hero pixel/cross-stitch references. Demon drawing now matche
 # 76. Cache refresh (2026-10-13)
 
 Live renderer fetched and byte-compared with local: latest demon art was deployed. Added matching version query to index main script and main Renderer import (`20261013-pixel2`) to refresh entry/renderer browser caches. VM test loader ignores URL query for filesystem resolution. Latest visual refinement affects demon only; heroes are unchanged.
+
+
+# 77. End-of-session handoff (2026-10-13)
+
+This is the latest handoff and supersedes earlier statements that changes are local/unpublished or that section 70 features remain pending.
+
+- User ended today's work and requested saving the conversation outcome and pushing it to GitHub. No additional development requested for this handoff.
+- Final demon battle, persistent score penalties/attempt bonus, final-only ultimates and FINAL_READY briefing are implemented. Full four-stage → final quiz → briefing → demon → CLEAR flow is covered by automated checks.
+- User playtested and reported other functionality and difficulty were good. Preserve them unless explicitly asked to change. This feedback is user testing, not assistant browser/FPS verification.
+- Hero mapping: warrior Chiikawa, archer Hachiware, mage Usagi. Canvas pixel sprites and matching start previews are implemented.
+- Latest three pixel references were used to refine the DEMON ONLY. Heroes were not redrawn to those newest cross-stitch references. If user expects changes to protagonists, clarify scope on resumption.
+- Demon art uses the first monster reference's white fur, single horn, green tail; later refinement uses thin brown outlines, rounded face, diagonal shining eyes and striped pink cheeks. No combat changes.
+- User said art looked unchanged. Fetched live renderer and byte-compared with local: identical latest code was served. Browser cache was a possible cause, not proven. Added main/renderer URL version `20261013-pixel2` and redeployed successfully.
+- Latest deployed gameplay commit before this documentation handoff: `bef8b38`; Pages workflow `38408916068` succeeded. Site: https://meibinlee.github.io/python-dungeon/ ; refresh link: https://meibinlee.github.io/python-dungeon/?v=20261013-pixel2 .
+- Last verification: 60 automated checks passed; git diff whitespace check passed. Demon/hero pixel previews inspected from actual drawing rectangles. Actual Chrome full-game visual/FPS verification is still not performed by the assistant.
+- Next useful check: user confirms latest demon appearance after reopening/refreshed page; school-device playtesting remains. No further feature work promised or pending for today.
+- Reference URLs retained for future art comparison:
+  - https://www.instagram.com/p/DcIqrSvE0x9/
+  - https://i.namu.wiki/i/BqsZ4W9hk3t1VNocJkUk02tMSJPz5I8q2bL4ATwYEM1QPjrrulpV2hrfuQDC37Tdg_Km3m0qPP4dCZ1tYFAdmQ.webp
+  - https://i.namu.wiki/i/KBsWhihWRa7N3WpXnqD9R1_W0ZvdmSZlLuPwc1ss0TZpaa2oMm6M2Km0_pIIN8s9H2MrwNCBCAPw6lyItZV-sA.webp
+  - https://i.pinimg.com/236x/c6/da/57/c6da57dbe97eab408917d497636e00f3.jpg
+  - https://i.pinimg.com/236x/c8/0e/bd/c80ebdd72362af3ed91f8da1fb1f7d93.jpg
+  - https://i.pinimg.com/236x/6a/ce/72/6ace72f1b73d076a55f8b8f21c4fd4fb.jpg
