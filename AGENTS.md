@@ -1858,3 +1858,11 @@ This is the latest handoff and supersedes earlier statements that changes are lo
   - https://i.pinimg.com/236x/c6/da/57/c6da57dbe97eab408917d497636e00f3.jpg
   - https://i.pinimg.com/236x/c8/0e/bd/c80ebdd72362af3ed91f8da1fb1f7d93.jpg
   - https://i.pinimg.com/236x/6a/ce/72/6ace72f1b73d076a55f8b8f21c4fd4fb.jpg
+
+
+# 78. v1.0.0 completion (2026-10-15)
+
+- User accepts the current implementation as the completed v1.0.0 baseline. Future requested changes should be handled as version upgrades; do not add further features without a request.
+- User confirmed the demon appearance. School-device playtesting will be performed by the user later.
+- README now matches final quiz → briefing → demon → CLEAR, distance-based Stage 4 hit counts, current hero art and demon retry rules. Gameplay code is unchanged.
+- User authorized committing, pushing and deploying this completed baseline. Confirm deployment result in the session; do not infer success from this record alone.
