@@ -187,3 +187,20 @@ button:hover:enabled { background:#ffe7a0; }
  .ability-options strong { grid-column:1; font-size:10px; }
  .ability-icon { display:none; }
 }
+
+/* Player count selector (1P / 2P) on the title screen. */
+.player-count { display:flex; justify-content:center; gap:8px; margin:8px 0 0; }
+.player-count button { display:grid; gap:2px; min-width:150px; padding:6px 14px; background:#fffaf0; color:#5d5949; border:2px solid #bbaa8b; box-shadow:none; font-size:13px; }
+.player-count small { font-size:10px; font-weight:600; color:inherit; }
+.player-count button[aria-pressed="true"] { background:#eed099; color:#5a3b23; border-color:#9b672c; }
+.player-count button:hover:enabled { background:#f7e2b9; }
+/* Solo: one centered card/box instead of two columns. */
+.solo .hero-setup, .solo .controls, .solo .scoreboard { grid-template-columns:1fr; }
+/* Keep the stage title centered in the HUD by reserving P2's slot. */
+.solo #p2-hud { visibility:hidden; }
+.solo .hero-setup .hero-card, .solo .controls > div, .solo .scoreboard .score-card { width:min(360px,100%); justify-self:center; }
+@media (max-height:700px), (max-width:900px) {
+  .player-count { margin-top:4px; }
+  .player-count button { min-width:120px; padding:4px 10px; }
+  .player-count small { display:none; }
+}
