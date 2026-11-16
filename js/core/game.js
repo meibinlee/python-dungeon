@@ -1,4 +1,4 @@
-import { MAX_DELTA_TIME, MAX_PROJECTILES, PLAYER_1_KEYS, PLAYER_2_KEYS, DAMAGE_NUMBER_TIME, MAX_DAMAGE_EFFECTS, KILL_SCORE, BOSS_SCORE, QUIZ_SCORE, DEMON, DEMON_BONUS, WRONG_FREE, WRONG_PENALTY, DEATH_FREE, DEATH_PENALTY, ULTIMATE, SPEED_BONUS } from './config.js?v=20261116-speed';
+import { MAX_DELTA_TIME, MAX_PROJECTILES, PLAYER_1_KEYS, PLAYER_2_KEYS, DAMAGE_NUMBER_TIME, MAX_DAMAGE_EFFECTS, KILL_SCORE, BOSS_SCORE, QUIZ_SCORE, DEMON, DEMON_BONUS, WRONG_FREE, WRONG_PENALTY, DEATH_FREE, DEATH_PENALTY, ULTIMATE, SPEED_BONUS, SOLO } from './config.js?v=20261116-solo';
 import { Boss } from '../entities/boss.js';
 import { Player } from '../entities/player.js';
 import { StageSystem } from '../systems/stage.js';
@@ -9,7 +9,9 @@ export class Game {
   constructor(input,renderer,events) {
     Object.assign(this, { input, renderer, events, state:'START', projectiles:[], monsters:[], items:[], battlePhase:'MONSTERS', restartNotice:0, lastTime:null });
     this.stages = new StageSystem();
-    this.players = [new Player(1,PLAYER_1_KEYS,'#6fc6ff',480,460), new Player(2,PLAYER_2_KEYS,'#ffd34e',760,460)];
+    // allPlayers keeps both heroes; players holds only those in the current run (1 or 2).
+    this.allPlayers = [new Player(1,PLAYER_1_KEYS,'#6fc6ff',480,460), new Player(2,PLAYER_2_KEYS,'#ffd34e',760,460)];
+    this.players = this.allPlayers;
     this.renderer.prepareBackground(this.stages.current);
     this.hudCache = '';
     this.needsRender = true;
@@ -41,6 +43,19 @@ export class Game {
     this.input.setEnabled(state === 'PLAYING', state === 'PLAYING' || state === 'PAUSED');
     this.events.onState(state);
     this.updateHud();
+  }
+  get playerCount() { return this.players.length; }
+  get isSolo() { return this.players.length === 1; }
+  get hpScale() { return this.isSolo ? SOLO.hpMultiplier : 1; }
+  // Only changed from menus, never during combat.
+  setPlayerCount(count) {
+    if (this.state !== 'START' && this.state !== 'READY' && this.state !== 'GAME_CLEAR') return;
+    this.players = this.allPlayers.slice(0,count === 1 ? 1 : 2);
+    const p1 = this.allPlayers[0];
+    [p1.spawnX,p1.spawnY] = this.isSolo ? [SOLO.spawnX,SOLO.spawnY] : [480,460];
+    p1.reset();
+    this.hudCache = '';
+    this.needsRender = true;
   }
   startGame() { this.correctAnswers = 0; this.resetPenalties(); this.players.forEach(player => player.resetStats()); this.stages.reset(); this.startStage(); }
   getScore(player) { return (player.kills-player.bossKills)*KILL_SCORE+player.bossKills*BOSS_SCORE; }
@@ -89,7 +104,7 @@ export class Game {
     this.players.forEach(player => player.reset());
     this.players.forEach(player => player.setLevel(this.stages.current.id));
     this.projectiles = [];
-    this.monsters = this.stages.spawnMonsters();
+    this.monsters = this.stages.spawnMonsters(this.hpScale);
     this.items = spawnItems();
     this.damageEffects = [];
     this.explosions = [];
@@ -112,7 +127,7 @@ export class Game {
     this.events.onTeacherQuiz(this.stages.current.id);
   }
   startBossBattle() {
-    const boss = this.stages.spawnBoss(this.players);
+    const boss = this.stages.spawnBoss(this.players,this.hpScale);
     if (!boss) return;
     this.monsters = [boss];
     this.projectiles = [];
@@ -125,7 +140,7 @@ export class Game {
     this.battlePhase = 'DEMON';
     this.battleTime = 0;
     this.players.forEach(player => { player.reset(true); player.setLevel(5); player.ultimateCooldown=0; });
-    this.monsters = [new Boss({...DEMON,isDemon:true})];
+    this.monsters = [new Boss({...DEMON,hp:Math.ceil(DEMON.hp*this.hpScale),isDemon:true})];
     this.projectiles=[]; this.items=[]; this.damageEffects=[]; this.explosions=[];
     this.setState('PLAYING'); this.updateHud();
   }
@@ -181,7 +196,7 @@ export class Game {
   }
   updateHud() {
     const boss = this.monsters.find(monster => monster.isBoss);
-    const values = `${this.state === 'PLAYING' ? Math.floor(this.battleTime) : ''}:${this.speedBonus}:${this.wrongAnswers}:${this.deaths}:${this.demonAttempts}:${this.demonBonus}:${this.correctAnswers}:${this.stages.current.id}:${this.battlePhase}:${boss ? Math.ceil(boss.hp) : ''}:${this.players.map(player => `${player.hp}/${player.maxHp}/${player.attackMultiplier}/${player.kills}/${player.bossKills}/${player.classType}/${player.nickname}/${player.level}/${this.battlePhase === 'DEMON' ? Math.ceil(player.ultimateCooldown) : ''}`).join(':')}`;
+    const values = `${this.players.length}:${this.state === 'PLAYING' ? Math.floor(this.battleTime) : ''}:${this.speedBonus}:${this.wrongAnswers}:${this.deaths}:${this.demonAttempts}:${this.demonBonus}:${this.correctAnswers}:${this.stages.current.id}:${this.battlePhase}:${boss ? Math.ceil(boss.hp) : ''}:${this.players.map(player => `${player.hp}/${player.maxHp}/${player.attackMultiplier}/${player.kills}/${player.bossKills}/${player.classType}/${player.nickname}/${player.level}/${this.battlePhase === 'DEMON' ? Math.ceil(player.ultimateCooldown) : ''}`).join(':')}`;
     if (values === this.hudCache) return;
     this.hudCache = values;
     this.events.onHud(this.players,this.stages.current,boss);
