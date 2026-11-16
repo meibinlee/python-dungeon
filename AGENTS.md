@@ -1898,3 +1898,11 @@ This is the latest handoff and supersedes earlier statements that changes are lo
 - User asked to restyle heroes like the Chiikawa/Hachiware/Usagi images (attached icons and python-coding-pet assets). Declined copying protected characters; user approved original replacements instead.
 - `Renderer.getHeroSprite` now draws original 32×40 heroes: warrior = helmeted hedgehog (spikes, team crest, sword+shield), archer = fox (pointed ears, white muzzle, bushy tail, bow), mage = owl (face discs, amber eyes, beak, purple wizard hat with team band, crystal staff). Same sprite size, draw offsets, collision, team accent colors and cache. Section 72/77 Chiikawa hero mapping is superseded; do not reintroduce character likenesses.
 - Renderer cache version `20261116-heroes` (main.js import). 64 checks pass.
+
+# 83. v1.4.0 uncapped proportional speed bonus (2026-11-16)
+
+- User asked to remove the max-score limit and give bonus proportional to speed for faster stage clears and faster quiz answers. Supersedes section 79's 110-cap/−2 per second rule and 2500 maximum.
+- Battle: `SPEED_BONUS = { base:110, stagePar:[40,45,50,60], demonPar:60, minSeconds:3 }`, bonus = round(base × par ÷ max(minSeconds, seconds)). Par → 110, half → 220; never reaches 0. minSeconds is a divide-by-zero floor, not a cap.
+- Quiz: `QUIZ_SPEED_BONUS = { base:50, par:20, minSeconds:3 }`, timed from showQuestion via `QuizSystem.now()` (Date.now, overridable in tests). Only first-try correct answers in that quiz (stage quiz, or each final slot) earn it; `missed` flag set on wrong, reset per final slot. Recorded in `speedBonuses` with `quiz:true`, label `퀴즈 N`. minSeconds 3 makes blind instant guessing (25% × 333) worth less than reading.
+- Stage rollback still truncates only current-stage battle records. Result screen lists each record with seconds and bonus. HUD still shows live projected battle bonus.
+- Cache version `20261116-speed3` (index→main, main→game/quiz, game→config). 64 checks pass (speed test rewritten: proportionality, no zero, rollback, quiz timing/first-try/final slots, total can exceed 2500).
