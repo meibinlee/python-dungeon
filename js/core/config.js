@@ -44,6 +44,9 @@ export const WRONG_FREE = 2;
 export const WRONG_PENALTY = 10;
 export const DEATH_FREE = 2;
 export const DEATH_PENALTY = 10;
+// Speed bonus: each stage boss and the demon award up to max points when cleared within par seconds
+// (pause/quiz time excluded), then lose decayPerSecond per extra second. 5 battles × 110 = 550.
+export const SPEED_BONUS = { max:110, stagePar:[40,45,50,60], demonPar:60, decayPerSecond:2 };
 export const DEMON_BONUS = { first:500, decrement:100, minimum:100 };
 export const DEMON = { name:'PYTHON 마왕', hp:360, speed:125, damage:2, tint:'#c65378', chargeInterval:2.4, chargeSpeed:520, windup:0.65, chargeTime:0.6, restTime:1.4, regenDelay:0.5, regenPerSecond:6 };
 export const ULTIMATE = { cooldown:8, damage:36, speed:720, range:1100, size:36, explosionTime:0.35, radius:72, maxEffects:8 };
