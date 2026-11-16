@@ -46,7 +46,13 @@ export const DEATH_FREE = 2;
 export const DEATH_PENALTY = 10;
 // Speed bonus: each stage boss and the demon award up to max points when cleared within par seconds
 // (pause/quiz time excluded), then lose decayPerSecond per extra second. 5 battles × 110 = 550.
-export const SPEED_BONUS = { max:110, stagePar:[40,45,50,60], demonPar:60, decayPerSecond:2 };
+// Speed bonus is proportional to speed (no maximum): bonus = base × par ÷ seconds.
+// Finishing exactly at par gives base points, twice as fast gives twice as many.
+// minSeconds only stops division by ~0; it is a sanity floor, not a score cap.
+export const SPEED_BONUS = { base:110, stagePar:[40,45,50,60], demonPar:60, minSeconds:3 };
+// Quiz answers: correct on the first try of that quiz → base × par ÷ seconds.
+// minSeconds 3 keeps blind instant guessing (25% chance) worth less than reading the question.
+export const QUIZ_SPEED_BONUS = { base:50, par:20, minSeconds:3 };
 // Solo mode: one hero deals about half the team damage, so enemy/boss HP is scaled down (rounded up).
 export const SOLO = { hpMultiplier:0.6, spawnX:620, spawnY:460 };
 export const DEMON_BONUS = { first:500, decrement:100, minimum:100 };
