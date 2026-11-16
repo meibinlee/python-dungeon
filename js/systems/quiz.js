@@ -1,4 +1,4 @@
-import { QUESTIONS } from '../data/questions.js';
+import { QUESTIONS } from '../data/questions.js?v=20261116-quiz';
 import { randomItem, shuffled } from '../core/utils.js';
 import { STAGES } from '../data/stages.js';
 
@@ -28,6 +28,22 @@ export function validateQuestions(questions) {
   for (const stage of stages) {
     if (!questions.some(question => question.stage === stage)) throw new Error(`Stage ${stage} 문제가 없습니다.`);
   }
+}
+
+const RANDOM = { int:(min,max) => min+Math.floor(Math.random()*(max-min+1)), pick:randomItem };
+
+// Fresh numbers/names from vary() (when present), then a fresh choice order.
+// Falls back to the fixed reference example if a generated variant is malformed.
+export function presentQuestion(base, r = RANDOM) {
+  let question = base;
+  if (typeof base.vary === 'function') {
+    for (let attempt = 0; attempt < 20; attempt++) {
+      const variant = { ...base, ...base.vary(r) };
+      if (new Set(variant.choices.map(choice => choice.trim())).size === 4 && variant.choices[variant.answer] !== undefined) { question = variant; break; }
+    }
+  }
+  const order = shuffled([0,1,2,3]);
+  return { ...question, choices:order.map(index => question.choices[index]), answer:order.indexOf(question.answer) };
 }
 
 export class QuizSystem {
@@ -60,7 +76,8 @@ export class QuizSystem {
     this.queue = [...shuffled(unseen.filter(q => q.stage >= 3)),...shuffled(unseen.filter(q => q.stage < 3)),...shuffled(seen)].slice(0,3);
     this.showQuestion(this.queue[0]);
   }
-  showQuestion(question) {
+  showQuestion(base) {
+    const question = presentQuestion(base);
     this.question = question;
     this.seen.add(question.id);
     this.locked = false;
