@@ -40,6 +40,7 @@ export class Game {
     this.needsRender = true;
     this.input.setEnabled(state === 'PLAYING', state === 'PLAYING' || state === 'PAUSED');
     this.events.onState(state);
+    this.updateHud();
   }
   startGame() { this.correctAnswers = 0; this.resetPenalties(); this.players.forEach(player => player.resetStats()); this.stages.reset(); this.startStage(); }
   getScore(player) { return (player.kills-player.bossKills)*KILL_SCORE+player.bossKills*BOSS_SCORE; }
@@ -52,7 +53,7 @@ export class Game {
     const par = this.battlePhase === 'DEMON' ? SPEED_BONUS.demonPar : SPEED_BONUS.stagePar[this.stages.index];
     return Math.max(0,SPEED_BONUS.max-Math.floor(Math.max(0,this.battleTime-par))*SPEED_BONUS.decayPerSecond);
   }
-  recordSpeedBonus(label) { this.speedBonuses.push({ label, seconds:Math.floor(this.battleTime), bonus:this.currentSpeedBonus }); }
+  recordSpeedBonus(label) { this.speedBonuses.push({ label, seconds:Math.floor(this.battleTime), bonus:this.currentSpeedBonus }); this.updateHud(); }
   recordWrongAnswer() { this.wrongAnswers++; this.updateHud(); }
   recordCorrectAnswer() { this.correctAnswers++; this.updateHud(); }
   showInstructions() {
