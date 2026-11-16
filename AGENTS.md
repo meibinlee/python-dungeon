@@ -1884,3 +1884,17 @@ This is the latest handoff and supersedes earlier statements that changes are lo
 - Solo balance (initial guess, tune after play): monster/boss/demon HP × `SOLO.hpMultiplier` 0.6 rounded up. Solo DOWN = all players down → stage retry / demon retry (no 3s respawn). Solo weakness: stage1 = chosen ability, stages 2–3 = other two abilities in CLASSES order, stage4 none. Score rules and 2500 max unchanged; UI says 총점 instead of 협력 총점.
 - Cache version `20261116-solo` on main.js, game.js and game.js's config import. 63 automated checks pass (2 new: solo engine flow, title selector UI). Headless Chrome screenshots of title (1P/2P), ready and Stage 1 solo HUD checked at 1366×768; title fits at 1280×720 and 1024×600; no console errors.
 - Published via GitHub web editor in the user's logged-in Chrome (9 commits, one per file) because this session's gh token was invalid and the Claude GitHub App lacked push access.
+
+# 81. v1.3.0 randomized question variants (2026-11-16)
+
+- User reported students memorizing answers; requested same patterns with changed numbers/text, random selection and shuffled order every time.
+- Each of the 12 `QUESTIONS` keeps its fixed reference example and adds `vary(r)` (r.int/r.pick) generating the same lesson pattern with new numbers, variable names, messages and dynamic explanation; answers/distractors computed in JS. s2-q3 also randomizes and/or (field `logic`). `josa()` helper in questions.js picks Korean particles for Hangul/digits.
+- `presentQuestion()` in quiz.js: applies vary (retries up to 20 if choices collide, else falls back to reference example), then shuffles choice order and remaps answer. Question IDs unchanged, so seen/final-unique logic still works by pattern.
+- `tests/check-questions.py` now takes `variants`: check-game.cjs generates 150 per pattern (1800) and Python verifies each output; '아무것도 출력되지 않는다' maps to empty output and must be the only matching choice. s2-q3 truth-table check generalized to any two variable names and and/or.
+- Cache version `20261116-quiz` on index→main.js, main→quiz.js, quiz→questions.js. 64 checks pass (new: variation + answer position movement + broken-variant fallback). Headless Chrome quiz screen checked; no console errors.
+
+# 82. v1.3.0 original heroes (2026-11-16)
+
+- User asked to restyle heroes like the Chiikawa/Hachiware/Usagi images (attached icons and python-coding-pet assets). Declined copying protected characters; user approved original replacements instead.
+- `Renderer.getHeroSprite` now draws original 32×40 heroes: warrior = helmeted hedgehog (spikes, team crest, sword+shield), archer = fox (pointed ears, white muzzle, bushy tail, bow), mage = owl (face discs, amber eyes, beak, purple wizard hat with team band, crystal staff). Same sprite size, draw offsets, collision, team accent colors and cache. Section 72/77 Chiikawa hero mapping is superseded; do not reintroduce character likenesses.
+- Renderer cache version `20261116-heroes` (main.js import). 64 checks pass.
