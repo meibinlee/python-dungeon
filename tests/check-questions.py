@@ -4,6 +4,7 @@ import ast
 import io
 import json
 import keyword
+import re
 import sys
 import token
 import tokenize
@@ -20,28 +21,53 @@ def output(code, answer_input='4'):
     return buffer.getvalue().rstrip('\n')
 
 
-for question in questions:
+def check_answer(question):
+    """Run the snippet in real Python and confirm the marked choice is the only right one."""
     correct = question['choices'][question['answer']]
+    assert len({choice.strip() for choice in question['choices']}) == 4, (question['id'], 'choices must be distinct', question['choices'])
     if question['id'] == 's1-q1':
         valid = [name for name in question['choices'] if name.isidentifier() and not keyword.iskeyword(name)]
         assert valid == [correct], (question['id'], valid, correct)
     elif question['id'] == 's2-q3':
-        # The wording requires BOTH conditions: verify all truth-table combinations,
+        # The wording requires BOTH (and) or EITHER (or): verify all truth-table combinations,
         # rather than checking only one example whose output could be ambiguous.
+        logic = question.get('logic', 'and')
+        assignments = re.findall(r'^(\w+) = -?\d+$', question['code'], re.M)
+        assert len(assignments) == 2, (question['id'], question['code'])
+        a, b = assignments
         valid = []
         for choice in question['choices']:
             satisfies = True
-            for keys in (-1, 0, 1):
-                for energy in (-1, 0, 1):
-                    code = question['code'].replace('keys = 1', f'keys = {keys}').replace('energy = 0', f'energy = {energy}').replace('___', choice)
-                    satisfies &= output(code) == str(keys > 0 and energy > 0)
+            for x in (-1, 0, 1, 2):
+                for y in (-1, 0, 1, 2):
+                    code = re.sub(rf'^{a} = -?\d+$', f'{a} = {x}', question['code'], flags=re.M)
+                    code = re.sub(rf'^{b} = -?\d+$', f'{b} = {y}', code, flags=re.M).replace('___', choice)
+                    expected = (x > 0 and y > 0) if logic == 'and' else (x > 0 or y > 0)
+                    try:
+                        satisfies &= output(code) == str(expected)
+                    except Exception:
+                        satisfies = False
             if satisfies:
                 valid.append(choice)
-        assert valid == [correct], (question['id'], valid, correct)
+        assert valid == [correct], (question['id'], logic, valid, correct)
     else:
-        actual = output(question['code'])
-        assert actual == correct, (question['id'], actual, correct)
+        actual = output(question['code'], question.get('input', '4'))
+        expected = '' if correct == '아무것도 출력되지 않는다' else correct
+        # Other choices must not also match the real output.
+        assert sum(('' if c == '아무것도 출력되지 않는다' else c) == actual for c in question['choices']) == 1, (question['id'], question['choices'], actual)
+        assert actual == expected, (question['id'], question['code'], actual, correct)
+    return correct
+
+
+for question in questions:
+    correct = check_answer(question)
     print(f"PASS Python answer {question['id']}: {correct!r}")
+
+variants = data.get('variants', [])
+for variant in variants:
+    check_answer(variant)
+if variants:
+    print(f'PASS Python answers for {len(variants)} randomly generated variants (all {len({v["id"] for v in variants})} question patterns)')
 
 assert output('score = 3\nscore = score + 2\nprint(score)') == '5'
 print('PASS reported score example: actual output is 5')
