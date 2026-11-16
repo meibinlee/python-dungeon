@@ -1,7 +1,7 @@
 import { Assets, ESSENTIAL_ASSETS, LATER_ASSETS } from './core/assets.js';
 import { Input } from './core/input.js';
 import { Renderer } from './core/renderer.js?v=20261013-pixel2';
-import { Game } from './core/game.js?v=20261116-speed';
+import { Game } from './core/game.js?v=20261116-speed2';
 import { QuizSystem } from './systems/quiz.js';
 import { NICKNAME_MAX_LENGTH, CLASSES, QUIZ_SCORE } from './core/config.js';
 
