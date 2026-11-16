@@ -204,3 +204,11 @@ button:hover:enabled { background:#ffe7a0; }
   .player-count button { min-width:120px; padding:4px 10px; }
   .player-count small { display:none; }
 }
+
+/* Shared TOP 5 leaderboard on the final CLEAR screen. */
+.leaderboard { margin:10px auto 0; padding:8px 14px; max-width:420px; background:#fffdf0; border:2px solid #c4ad80; text-align:left; }
+.leaderboard > strong { display:block; text-align:center; margin-bottom:4px; }
+.leaderboard ol { list-style:none; margin:0; padding:0; }
+.leaderboard li { display:flex; justify-content:space-between; gap:12px; padding:2px 6px; font-size:14px; }
+.leaderboard li.new-record { background:#ffe9a0; color:#5a3b23; font-weight:700; }
+.leaderboard p { margin:4px 0 0 !important; font-size:12px; text-align:center; }
