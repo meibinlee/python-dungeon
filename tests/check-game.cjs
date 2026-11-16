@@ -12,7 +12,7 @@ class Element {
   get textContent() { return this.children.length ? this.children.map(child => child.textContent).join('') : this.value; }
   addEventListener(type,callback) { this.listeners[type]=callback; }
   append(...elements) { this.children.push(...elements); }
-  replaceChildren() { this.children=[]; }
+  replaceChildren(...elements) { this.children=[...elements]; }
   focus() { }
   setAttribute(name,value) { this[name]=value; }
   click() { if (!this.disabled) this.listeners.click?.(); }
@@ -33,6 +33,7 @@ async function moduleAt(file) {
 async function load(relative) { const module=await moduleAt(path.join(root,relative)); if(module.status!=='evaluated') await module.evaluate(); return module.namespace; }
 let checks=0;
 function check(name, fn) { fn(); checks++; console.log('PASS '+name); }
+async function checkAsync(name, fn) { await fn(); checks++; console.log('PASS '+name); }
 function key(code,down=true,extra={}) { let prevented=false; windowEvents.get(down?'keydown':'keyup')({code,preventDefault:()=>prevented=true,...extra}); return prevented; }
 (async()=>{
  const {Input}=await load('js/core/input.js');
@@ -438,6 +439,26 @@ const pythonCheck=spawnSync('python3',[path.join(root,'tests/check-questions.py'
    elements['result-button'].click();assert.equal(elements['ready-start-button'].textContent,'1 PLAYER START');elements['ready-start-button'].click();assert.equal(appGame.players.length,1);
    appGame.returnToStart();elements['mode-2p'].click();assert.equal(elements['p2-card'].hidden,false);assert.equal(elements['game-shell'].classList.contains('solo'),false);
    elements['start-button'].click();assert.match(elements['loading-message'].textContent,/PLAYER 2/);elements['p2-nickname'].value='코코';elements['start-button'].click();elements['ready-start-button'].click();assert.equal(appGame.players.length,2);
+ });
+ await checkAsync('shared TOP 5: hidden without config, submits nickname1/nickname2 once at CLEAR, highlights new record, survives failures',async()=>{
+   const board=await load('js/systems/leaderboard.js');
+   const saved={...config.LEADERBOARD};config.LEADERBOARD.url='';config.LEADERBOARD.key='';
+   assert.equal(board.recordName([{nickname:'루나'},{nickname:'코코'}]),'루나/코코');assert.equal(board.recordName([{nickname:'솔로'}]),'솔로');
+   const clear=()=>{appGame.returnToStart();elements['start-button'].click();elements['ready-start-button'].click();appGame.finishQuiz(true);elements['final-start-button'].click();appGame.battleTime=config.SPEED_BONUS.demonPar;appGame.monsters[0].takeDamage(9999);appGame.update(0);};
+   const calls=[];context.setTimeout=(f,ms)=>0;context.clearTimeout=()=>{};context.AbortController=class{constructor(){this.signal={};}abort(){}};
+   context.fetch=async(url,options)=>{calls.push([url,options]);return {ok:true,json:async()=>({id:7,top:[{id:3,name:'하늘/바다',score:9000,players:2},{id:7,name:'루나/코코',score:500,players:2}]})};};
+   elements['p1-nickname'].value='루나';elements['p2-nickname'].value='코코';
+   clear();await new Promise(r=>setImmediate(r));assert.equal(elements['leaderboard'].hidden,true);assert.equal(calls.length,0);
+   config.LEADERBOARD.url='https://example.supabase.co';config.LEADERBOARD.key='public-key';
+   clear();for(let i=0;i<5;i++)await new Promise(r=>setImmediate(r));
+   assert.equal(elements['leaderboard'].hidden,false);assert.equal(calls.length,1,elements['leaderboard-status'].textContent);
+   assert.equal(calls[0][0],'https://example.supabase.co/rest/v1/rpc/code_quest_submit_score');assert.equal(calls[0][1].method,'POST');assert.equal(calls[0][1].headers.apikey,'public-key');
+   const body=JSON.parse(calls[0][1].body);assert.equal(body.p_name,'루나/코코');assert.equal(body.p_players,2);assert.equal(body.p_score,appGame.totalScore);
+   const rows=elements['leaderboard-list'].children;assert.equal(rows.length,2);assert.equal(rows[1].className,'new-record');assert.match(elements['leaderboard-status'].textContent,/TOP 5에 이름/);
+   context.fetch=async()=>{throw new Error('offline');};clear();for(let i=0;i<5;i++)await new Promise(r=>setImmediate(r));
+   assert.match(elements['leaderboard-status'].textContent,/연결할 수 없어요/);assert.equal(appGame.state,'GAME_CLEAR');
+   Object.assign(config.LEADERBOARD,saved);appGame.returnToStart();
+   assert.ok(saved.url.startsWith('https://')&&saved.url.endsWith('.supabase.co'));assert.ok(saved.key.startsWith('sb_publishable_'),'only the public publishable key may be in the repo');
  });
  console.log(`\n${checks} checks passed. No runtime exceptions.`);
 })().catch(error=>{console.error(error);process.exitCode=1;});
