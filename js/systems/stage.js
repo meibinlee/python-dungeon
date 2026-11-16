@@ -11,13 +11,14 @@ export class StageSystem {
   get isLast() { return this.index === STAGES.length-1; }
   reset() { this.index = 0; }
   advance() { if (!this.isLast) this.index++; }
-  spawnMonsters() {
+  spawnMonsters(hpScale = 1) {
     const stage = this.current;
+    const hp = Math.ceil(stage.hp*hpScale);
     const labels = shuffled(stage.monsters);
-    return shuffled(SPAWNS).slice(0, Math.min(stage.count, MAX_MONSTERS)).map(([x,y],i) => new Monster(labels[i%labels.length],x,y,stage.speed,stage.hp));
+    return shuffled(SPAWNS).slice(0, Math.min(stage.count, MAX_MONSTERS)).map(([x,y],i) => new Monster(labels[i%labels.length],x,y,stage.speed,hp));
   }
   isComplete(monsters) { return monsters.length === 0; }
-  spawnBoss(players = []) {
+  spawnBoss(players = [], hpScale = 1) {
     const definition = this.current.boss;
     if (!definition) return null;
     let weakness = definition.weakness;
@@ -28,8 +29,12 @@ export class StageSystem {
       // With identical picks, use the first unselected role in the configured order.
       else if (this.current.id === 3) weakness = Object.keys(CLASSES).find(type => !selected.includes(type));
       else weakness = null;
+    } else if (selected.length === 1) {
+      // Solo: stage 1 favors the hero's ability, stages 2–3 the two other abilities, stage 4 none.
+      const others = Object.keys(CLASSES).filter(type => type !== selected[0]);
+      weakness = [selected[0],others[0],others[1],null][this.current.id-1] ?? null;
     }
     // Do not mutate shared stage data: retries and new games resolve from current picks.
-    return new Boss({ ...definition, weakness });
+    return new Boss({ ...definition, hp:Math.ceil(definition.hp*hpScale), weakness });
   }
 }
