@@ -42,7 +42,7 @@ function key(code,down=true,extra={}) { let prevented=false; windowEvents.get(do
  const {Game}=await load('js/core/game.js');
  const {Renderer}=await load('js/core/renderer.js');
  const {Assets}=await load('js/core/assets.js');
- const {QuizSystem,validateQuestions}=await load('js/systems/quiz.js');
+ const {QuizSystem,validateQuestions,presentQuestion}=await load('js/systems/quiz.js');
  const {QUESTIONS}=await load('js/data/questions.js');
  const config=await load('js/core/config.js');
  const {checkCollisions}=await load('js/systems/collision.js');
@@ -170,11 +170,11 @@ function key(code,down=true,extra={}) { let prevented=false; windowEvents.get(do
  });
  check('all choice callbacks grade correct indexes and show explanations',()=>{
    quiz.final=false;
-   for(const q of QUESTIONS){quiz.stage=q.stage;quiz.showQuestion(q);const buttons=elements['quiz-choices'].children;for(let i=0;i<4;i++){assert.equal(buttons[i].children[0].textContent,['①','②','③','④'][i]);assert.equal(buttons[i].children[1].textContent,q.choices[i]);}buttons[q.answer].click();assert.equal(quiz.correct,true);assert.match(elements['quiz-feedback'].textContent,/CORRECT/);assert.ok(elements['quiz-feedback'].textContent.includes(q.explanation));}
+   for(const q of QUESTIONS){quiz.stage=q.stage;quiz.showQuestion(q);const shown=quiz.question;assert.equal(shown.id,q.id);const buttons=elements['quiz-choices'].children;for(let i=0;i<4;i++){assert.equal(buttons[i].children[0].textContent,['①','②','③','④'][i]);assert.equal(buttons[i].children[1].textContent,shown.choices[i]);}buttons[shown.answer].click();assert.equal(quiz.correct,true);assert.match(elements['quiz-feedback'].textContent,/CORRECT/);assert.ok(elements['quiz-feedback'].textContent.includes(shown.explanation));}
  });
  check('reported score=3 then +2 grades value 5; ④ and value are separate spans',()=>{
    const q={id:'legacy-score',stage:1,question:'score?',code:'score = 3\nscore = score + 2\nprint(score)',choices:['3','2','32','5'],answer:3};
-   quiz.showQuestion(q);const fourth=elements['quiz-choices'].children[3];assert.equal(fourth.children[0].textContent,'④');assert.equal(fourth.children[1].textContent,'5');fourth.click();assert.equal(quiz.correct,true);assert.ok(!fourth.textContent.includes('4.5'));
+   quiz.showQuestion(q);const buttons=elements['quiz-choices'].children;const index=quiz.question.answer;const right=buttons[index];assert.equal(right.children[0].textContent,['①','②','③','④'][index]);assert.equal(right.children[1].textContent,'5');right.click();assert.equal(quiz.correct,true);assert.ok(!right.textContent.includes('4.5'));
  });
  check('invalid quiz data rejected: indexes, IDs, duplicates, missing stages',()=>{
    validateQuestions(QUESTIONS);
@@ -205,6 +205,15 @@ function key(code,down=true,extra={}) { let prevented=false; windowEvents.get(do
  });
  check('quiz seen-history avoids repeats until exhausted and final prefers unseen',()=>{
    quiz.resetRun();quiz.startStage(1);const ids=[];for(let i=0;i<3;i++){ids.push(quiz.question.id);quiz.checkAnswer((quiz.question.answer+1)%4);quiz.continueQuiz();}assert.equal(new Set(ids).size,3);const prior=new Set(quiz.seen);quiz.startFinal();assert.equal(new Set(quiz.queue.map(q=>q.id)).size,3);assert.ok(quiz.queue.every(q=>!prior.has(q.id)));quiz.resetRun();assert.equal(quiz.seen.size,0);
+ });
+ check('questions change numbers/names and choice order each time; answers stay correct',()=>{
+   for(const q of QUESTIONS){
+     const codes=new Set(),answerSlots=new Set();
+     for(let i=0;i<60;i++){const v=presentQuestion(q);assert.equal(v.id,q.id);assert.equal(v.stage,q.stage);assert.equal(v.choices.length,4);assert.equal(new Set(v.choices).size,4);assert.ok(v.answer>=0&&v.answer<=3);codes.add(v.code+'|'+v.question);answerSlots.add(v.answer);}
+     assert.ok(codes.size>=3,`${q.id} should vary`);assert.ok(answerSlots.size>=3,`${q.id} answer position should move`);
+   }
+   const plain={...QUESTIONS[0]};delete plain.vary;const slots=new Set();for(let i=0;i<60;i++){const v=presentQuestion(plain);assert.equal(v.choices[v.answer],plain.choices[plain.answer]);slots.add(v.answer);}assert.ok(slots.size>=3);
+   const broken={...QUESTIONS[1],vary:()=>({choices:['1','1','1','1'],answer:0})};const v=presentQuestion(broken);assert.equal(v.choices[v.answer],QUESTIONS[1].choices[QUESTIONS[1].answer]);
  });
  check('runtime rejects same question content under a new ID',()=>{
    const copy=QUESTIONS.map(q=>({...q}));copy.push({...copy[0],id:'new-id-same-question'});assert.throws(()=>validateQuestions(copy),/중복/);
@@ -350,7 +359,9 @@ function key(code,down=true,extra={}) { let prevented=false; windowEvents.get(do
    // Keep the fixed reference AND new live questions so older examples remain reserved.
    sibling=[...sibling,...live.filter(q=>!sibling.some(old=>old.question===q.question&&old.code===q.code))];
  }
- const pythonCheck=spawnSync('python3',[path.join(root,'tests/check-questions.py')],{input:JSON.stringify({questions:QUESTIONS,sibling}),encoding:'utf8',timeout:10000});
+ // Every pattern is generated many times with random numbers/names and shuffled choices.
+const variants=[];for(const q of QUESTIONS)for(let i=0;i<150;i++){const v=presentQuestion(q);delete v.vary;variants.push(v);}
+const pythonCheck=spawnSync('python3',[path.join(root,'tests/check-questions.py')],{input:JSON.stringify({questions:QUESTIONS,sibling,variants}),encoding:'utf8',timeout:10000});
  process.stdout.write(pythonCheck.stdout);if(pythonCheck.status!==0){throw new Error(pythonCheck.stderr||'Python question verification failed');}
  checks++;
  check('cross-project detector rejects renamed variables, numbers and messages',()=>{
