@@ -316,17 +316,29 @@ function key(code,down=true,extra={}) { let prevented=false; windowEvents.get(do
    game.update(0);assert.equal(game.demonAttempts,2);assert.equal(game.correctAnswers,7);assert.equal(game.deaths,2);assert.equal(game.monsters[0].hp,config.DEMON.hp);
    game.monsters[0].takeDamage(999);game.update(0);assert.equal(game.state,'GAME_CLEAR');assert.equal(game.demonBonus,400);
  });
- check('speed bonus: faster clears score more, rollback on retry, perfect run totals 2500',()=>{
+ check('speed bonus is proportional to speed with no maximum; quiz answers earn speed points',()=>{
+   const expected=(par,t)=>Math.round(config.SPEED_BONUS.base*par/Math.max(config.SPEED_BONUS.minSeconds,t));
    game.startGame();game.monsters=[];game.battlePhase='BOSS';game.battleTime=40;game.update(0);assert.equal(game.speedBonus,110);assert.equal(game.state,'QUIZ');
-   game.setState('PLAYING');game.battleTime=50.9;game.monsters=[];game.battlePhase='BOSS';game.update(0);assert.equal(game.speedBonuses[1].bonus,90);
-   game.setState('PLAYING');game.battlePhase='BOSS';game.battleTime=999;game.monsters=[];game.update(0);assert.equal(game.speedBonuses[2].bonus,0);
-   game.stages.index=1;game.startStage();game.speedBonuses.push({bonus:50});game.restartStage();assert.equal(game.speedBonuses.length,3);
+   game.setState('PLAYING');game.battleTime=20;game.monsters=[];game.battlePhase='BOSS';game.update(0);assert.equal(game.speedBonuses[1].bonus,220);
+   game.setState('PLAYING');game.battleTime=4;game.monsters=[];game.battlePhase='BOSS';game.update(0);assert.equal(game.speedBonuses[2].bonus,1100);
+   game.setState('PLAYING');game.battleTime=0.01;game.monsters=[];game.battlePhase='BOSS';game.update(0);assert.equal(game.speedBonuses[3].bonus,expected(40,0.01));
+   game.setState('PLAYING');game.battleTime=999;game.monsters=[];game.battlePhase='BOSS';game.update(0);assert.equal(game.speedBonuses[4].bonus,expected(40,999));assert.ok(game.speedBonuses[4].bonus>0);
+   for(const t of [5,10,30,60,120]) assert.ok(expected(40,t)>expected(40,t+1));
+   game.stages.index=1;game.startStage();const kept=game.speedBonuses.length;game.speedBonuses.push({bonus:50});game.restartStage();assert.equal(game.speedBonuses.length,kept);
    game.setState('PAUSED');const t=game.battleTime;game.update(5);assert.equal(game.battleTime,t);
+   // Quiz speed: timed from showing the question; first try only; wrong answers forfeit it for that quiz.
    game.startGame();assert.equal(game.speedBonus,0);
-   // Perfect run: 25 regular + 5 boss kills, 7 correct answers, first-try demon, every battle within par.
-   const [p1]=game.players;p1.kills=30;p1.bossKills=5;game.correctAnswers=7;game.demonAttempts=1;
-   game.speedBonuses=Array.from({length:5},()=>({bonus:config.SPEED_BONUS.max}));game.demonBonus=config.DEMON_BONUS.first;
-   assert.equal(game.totalScore,2500);
+   let clock=0;const timed=new QuizSystem(()=>{},answer=>game.recordCorrectAnswer(answer),()=>game.recordWrongAnswer());timed.now=()=>clock;
+   timed.startStage(1);clock+=5000;timed.checkAnswer(timed.question.answer);assert.equal(game.speedBonuses.at(-1).bonus,200);assert.equal(game.speedBonuses.at(-1).quiz,true);
+   timed.startStage(2);clock+=1000;timed.checkAnswer(timed.question.answer);assert.equal(game.speedBonuses.at(-1).bonus,Math.round(50*20/3));
+   timed.startStage(3);clock+=40000;timed.checkAnswer(timed.question.answer);assert.equal(game.speedBonuses.at(-1).bonus,25);
+   const before=game.speedBonuses.length;timed.startStage(4);timed.checkAnswer((timed.question.answer+1)%4);timed.continueQuiz();clock+=2000;timed.checkAnswer(timed.question.answer);assert.equal(game.speedBonuses.length,before);assert.equal(game.correctAnswers,4);
+   timed.startFinal();clock+=4000;timed.checkAnswer((timed.question.answer+1)%4);timed.continueQuiz();timed.checkAnswer(timed.question.answer);assert.equal(game.speedBonuses.length,before);
+   timed.continueQuiz();clock+=10000;timed.checkAnswer(timed.question.answer);assert.equal(game.speedBonuses.at(-1).bonus,100);
+   // No score ceiling: a very fast run exceeds the old 2500 maximum.
+   const [p1]=game.players;p1.kills=30;p1.bossKills=5;game.correctAnswers=7;game.demonAttempts=1;game.wrongAnswers=0;game.deaths=0;
+   game.speedBonuses=[...[40,45,50,60,60].map(par=>({bonus:expected(par,5)})),...Array.from({length:7},()=>({bonus:333}))];game.demonBonus=config.DEMON_BONUS.first;
+   assert.ok(game.totalScore>2500,`fast run scored ${game.totalScore}`);
  });
  check('wrong/death penalties survive stage rollback, clamp total and reset new run',()=>{
    game.startGame();for(let i=0;i<5;i++)game.recordWrongAnswer();game.deaths=4;assert.equal(game.penalty,50);assert.equal(game.totalScore,0);game.restartStage();assert.equal(game.penalty,50);
@@ -403,7 +415,7 @@ const pythonCheck=spawnSync('python3',[path.join(root,'tests/check-questions.py'
  check('nickname HUD and final individual/team scoreboard; replay resets scores',()=>{
    elements['start-button'].click();elements['ready-start-button'].click();assert.equal(elements['p1-name'].textContent,'P1 루나');assert.equal(elements['p2-name'].textContent,'P2 코코');assert.equal(appGame.players[0].classType,'warrior');assert.equal(appGame.players[1].classType,'archer');
    appGame.finishQuiz(true);assert.equal(elements['final-ready-screen'].hidden,false);assert.equal(appGame.state,'FINAL_READY');elements['final-start-button'].click();assert.equal(elements['final-ready-screen'].hidden,true);assert.equal(appGame.battlePhase,'DEMON');
-   appGame.players[0].kills=3;appGame.correctAnswers=3;appGame.players[1].kills=2;appGame.players[1].bossKills=1;appGame.monsters[0].takeDamage(999);appGame.update(0);
+   appGame.players[0].kills=3;appGame.correctAnswers=3;appGame.players[1].kills=2;appGame.players[1].bossKills=1;appGame.battleTime=config.SPEED_BONUS.demonPar;appGame.monsters[0].takeDamage(999);appGame.update(0);
    assert.equal(elements['result-p1-score'].textContent,'30점');assert.equal(elements['result-p2-score'].textContent,'110점');assert.equal(elements['result-team-score'].textContent,'협력 총점 1050점');assert.equal(elements['result-scores'].hidden,false);
    elements['result-button'].click();elements['ready-start-button'].click();assert.equal(appGame.totalScore,0);assert.equal(appGame.players[0].nickname,'루나');
  });
