@@ -1,7 +1,7 @@
 import { Assets, ESSENTIAL_ASSETS, LATER_ASSETS } from './core/assets.js';
 import { Input } from './core/input.js';
 import { Renderer } from './core/renderer.js?v=20261013-pixel2';
-import { Game } from './core/game.js';
+import { Game } from './core/game.js?v=20261116-speed';
 import { QuizSystem } from './systems/quiz.js';
 import { NICKNAME_MAX_LENGTH, CLASSES, QUIZ_SCORE } from './core/config.js';
 
@@ -43,7 +43,7 @@ async function initialize() {
           ui[`p${player.id}-power`].textContent = `${CLASSES[player.classType].name} LV ${player.level} · ATK ×${player.attackMultiplier}${player.defenseUp ? ' · 방패 +1' : ''}${game.battlePhase === 'DEMON' ? ` · ${player.id===1?'G':'K'} 궁극기 ${Math.ceil(player.ultimateCooldown)||'준비'}` : ''}`;
           ui[`p${player.id}-score`].textContent = `${game.getScore(player)}점`;
         }
-        ui['team-score'].textContent = `협력 총점 ${game.totalScore}`;
+        ui['team-score'].textContent = `협력 총점 ${game.totalScore}${game.state === 'PLAYING' ? ` · ⏱ ${Math.floor(game.battleTime)}초 스피드 +${game.currentSpeedBonus}` : ''}`;
         ui['boss-hud'].hidden = !boss;
         if (boss) {
           ui['boss-name'].textContent = `${boss.label} · ${boss.weakness ? CLASSES[boss.weakness].name+' 약점 ×3' : '약점 없음'}`;
@@ -67,7 +67,7 @@ async function initialize() {
             ui[`result-p${player.id}-details`].textContent = `일반 적 ${player.kills-player.bossKills}마리 · 보스 ${player.bossKills}마리`;
             ui[`result-p${player.id}-score`].textContent = `${game.getScore(player)}점`;
           }
-          ui['result-quiz-score'].textContent = `공통 퀴즈 정답 ${game.correctAnswers}개 · ${game.correctAnswers*QUIZ_SCORE}점 · 마왕 ${game.demonAttempts}차 승리 +${game.demonBonus}점 · 오답 ${game.wrongAnswers}회 / DOWN ${game.deaths}회 감점 −${game.penalty}점`;
+          ui['result-quiz-score'].textContent = `공통 퀴즈 정답 ${game.correctAnswers}개 · ${game.correctAnswers*QUIZ_SCORE}점 · 마왕 ${game.demonAttempts}차 승리 +${game.demonBonus}점 · 스피드 보너스 +${game.speedBonus}점 (${game.speedBonuses.map(record => `${record.label} ${record.seconds}초`).join(', ')}) · 오답 ${game.wrongAnswers}회 / DOWN ${game.deaths}회 감점 −${game.penalty}점`;
           ui['result-team-score'].textContent = `협력 총점 ${game.totalScore}점`;
         }
         ui['result-eyebrow'].textContent = final ? 'CODE QUEST' : 'CORRECT!';
