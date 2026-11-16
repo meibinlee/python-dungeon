@@ -136,66 +136,84 @@ export class Renderer {
     if(this.heroSprites.has(key)) return this.heroSprites.get(key);
     const sprite=document.createElement('canvas');sprite.width=32;sprite.height=40;
     const ctx=sprite.getContext('2d');
-    const ink='#493b3d', white='#fffdf0', cream='#fff0b0', blue='#83bedb';
-    const fur=type==='mage'?cream:white;
+    const ink='#3f3335', white='#fffdf0';
     const team=id===1?'#5ba9e0':'#e6b64c';
     const rect=(c,x,y,w,h)=>{ctx.fillStyle=c;ctx.fillRect(x,y,w,h);};
-    // Cached 32x40 pixel interpretation: Chiikawa / Hachiware / Usagi motifs.
-    // Keep the face and ears visible; equipment identifies the gameplay ability.
-    if(type==='mage') {
-      rect(ink,9,0,5,16);rect(ink,19,0,5,16);
-      rect(fur,10,1,3,15);rect(fur,20,1,3,15);
-      rect('#eea9af',11,3,1,10);rect('#eea9af',21,3,1,10);
+    // Original cached 32x40 heroes (v1.3.0): hedgehog warrior, fox archer, owl mage.
+    // Thin dark outline + flat fills; equipment identifies the gameplay ability.
+    const look={
+      warrior:{ head:'#9a6b47', body:'#aab6bf', limb:'#9a6b47' },
+      archer:{ head:'#e9884a', body:'#6f9a63', limb:'#e9884a' },
+      mage:{ head:'#a98a6e', body:'#8a6cb8', limb:'#8c6f55' }
+    }[type];
+    if(type==='warrior') {
+      // Hedgehog spikes behind the head.
+      const spike='#5b3d2a';
+      for(const x of [6,10,14,18,22]) {rect(ink,x,5,4,6);rect(spike,x+1,6,2,5);rect(ink,x+1,3,2,2);}
+      rect(ink,2,13,5,4);rect(spike,3,14,3,2);rect(ink,1,18,5,4);rect(spike,2,19,3,2);
+      rect(ink,25,13,5,4);rect(spike,26,14,3,2);rect(ink,26,18,5,4);rect(spike,27,19,3,2);
     } else if(type==='archer') {
-      rect(ink,5,6,7,9);rect(ink,20,6,7,9);
-      rect(blue,6,7,5,8);rect(blue,21,7,5,8);
-      rect('#edb9bd',7,9,2,3);rect('#edb9bd',23,9,2,3);
+      // Tall pointed fox ears with dark tips.
+      rect(ink,6,3,6,10);rect(ink,20,3,6,10);
+      rect(look.head,7,6,4,7);rect(look.head,21,6,4,7);
+      rect('#4a3030',8,4,2,2);rect('#4a3030',22,4,2,2);
+      rect('#ffd9bf',8,8,2,4);rect('#ffd9bf',22,8,2,4);
     } else {
-      rect(ink,6,7,6,7);rect(ink,20,7,6,7);
-      rect(fur,7,8,4,6);rect(fur,21,8,4,6);
-      rect('#f2c5c0',8,9,2,2);rect('#f2c5c0',22,9,2,2);
+      // Small owl ear tufts.
+      rect(ink,6,8,4,5);rect(ink,22,8,4,5);rect(look.head,7,9,2,4);rect(look.head,23,9,2,4);
     }
-    // Small body, stubby arms/feet, large soft stepped head.
-    rect(ink,8,26,16,11);rect(fur,9,27,14,9);
-    rect(ink,7,35,7,4);rect(ink,18,35,7,4);
-    rect(fur,8,35,5,3);rect(fur,19,35,5,3);
-    rect(ink,4,27,5,6);rect(fur,5,28,4,4);
-    rect(ink,23,27,5,6);rect(fur,23,28,4,4);
-    rect(ink,7,12,18,17);rect(ink,4,15,24,11);rect(ink,6,14,20,14);
-    rect(fur,7,13,18,14);rect(fur,5,16,22,9);rect(fur,8,26,16,2);
-    if(type==='archer') {
-      rect(blue,7,13,18,4);rect(blue,5,16,7,3);rect(blue,20,16,7,3);
-      rect(white,13,13,6,4);rect(white,11,17,10,3);
-    }
-    rect(ink,9,20,3,4);rect(ink,20,20,3,4);
-    rect('#ffffff',9,20,1,1);rect('#ffffff',20,20,1,1);
-    rect('#efb1bc',6,24,5,2);rect('#efb1bc',21,24,5,2);
-    rect(ink,14,24,1,1);rect(ink,17,24,1,1);rect(ink,15,25,3,1);
-    if(type==='mage') {
-      rect(ink,15,26,3,2);rect('#e49b9e',16,26,1,1);
-      rect(ink,9,17,4,1);rect(ink,19,17,4,1);
-      // Short purple cape, stars, crystal staff; long ears stay uncovered.
-      rect('#9b80bd',9,30,14,5);rect('#c8afe2',10,30,3,4);
-      rect(team,14,30,4,2);rect('#ffe9a0',16,33,2,1);
-      rect(ink,28,23,2,14);rect('#aa7b53',28,24,1,12);
-      rect(ink,26,18,6,7);rect('#a78fe5',27,19,4,5);
-      rect('#e6dcff',28,19,2,2);rect('#ffe9a0',27,25,4,1);
-    } else if(type==='archer') {
-      rect('#739a77',9,30,14,4);rect(team,14,30,4,2);
-      rect('#ba8c51',9,34,14,1);
-      rect('#8e6547',2,24,3,9);rect('#dfd4a7',2,22,1,5);rect('#dfd4a7',4,21,1,6);
-      // Curved bow and bright string.
-      rect(ink,29,24,2,10);rect('#c29151',29,25,1,8);
-      rect('#c29151',28,23,1,2);rect('#c29151',28,33,1,2);
-      rect('#c29151',27,22,1,2);rect('#c29151',27,34,1,2);
-      rect('#fff1c0',27,24,1,10);
-    } else {
+    // Body, stubby feet and arms.
+    rect(ink,8,26,16,11);rect(look.body,9,27,14,9);
+    rect(ink,8,35,7,4);rect(ink,17,35,7,4);
+    rect('#6b4a35',9,35,5,3);rect('#6b4a35',18,35,5,3);
+    rect(ink,4,27,5,6);rect(look.limb,5,28,4,4);
+    rect(ink,23,27,5,6);rect(look.limb,23,28,4,4);
+    // Round stepped head.
+    rect(ink,7,10,18,18);rect(ink,5,13,22,12);
+    rect(look.head,8,11,16,16);rect(look.head,6,14,20,10);
+    if(type==='warrior') {
+      rect('#f1d3a6',8,17,16,9);rect('#f1d3a6',10,16,12,1);
+      rect(ink,11,19,2,3);rect(ink,19,19,2,3);rect('#ffffff',11,19,1,1);rect('#ffffff',19,19,1,1);
+      rect(ink,15,22,2,2);rect(ink,14,25,4,1);
+      // Steel helmet band with a team-colored crest.
+      rect(ink,7,9,18,6);rect('#c7d3da',8,10,16,4);rect('#eef4f6',9,10,6,1);
+      rect(ink,14,4,4,6);rect(team,15,5,2,5);
       rect('#aabcc5',9,30,14,4);rect('#dce9ed',10,30,12,1);
       rect(team,14,31,4,2);rect('#d8b35e',9,34,14,1);
       // Silver sword and compact shield.
       rect(ink,28,19,3,17);rect('#d2e2e9',28,20,2,11);rect('#ffffff',28,20,1,8);
       rect('#dfb95a',26,31,6,2);rect('#8a644b',29,33,1,3);
       rect(ink,1,28,6,8);rect(team,2,29,4,5);rect('#ffec9d',3,30,2,3);
+    } else if(type==='archer') {
+      rect(white,9,20,14,6);rect(white,7,18,4,3);rect(white,21,18,4,3);
+      rect(ink,10,17,3,2);rect(ink,19,17,3,2);rect(ink,11,19,1,1);rect(ink,20,19,1,1);
+      rect(ink,15,21,2,2);rect(ink,14,24,1,1);rect(ink,17,24,1,1);rect(ink,15,25,2,1);
+      rect('#f3a7a0',7,22,2,1);rect('#f3a7a0',23,22,2,1);
+      rect(look.body,9,30,14,4);rect(team,14,30,4,2);rect('#ba8c51',9,34,14,1);
+      // Bushy tail with a white tip on the left.
+      rect(ink,0,26,6,11);rect(look.head,1,27,4,6);rect(white,1,33,4,3);
+      // Curved bow and bright string.
+      rect(ink,29,24,2,10);rect('#c29151',29,25,1,8);
+      rect('#c29151',28,23,1,2);rect('#c29151',28,33,1,2);
+      rect('#c29151',27,22,1,2);rect('#c29151',27,34,1,2);
+      rect('#fff1c0',27,24,1,10);
+    } else {
+      // Pale face discs, big amber eyes and a small beak.
+      rect('#efe0c6',8,15,7,9);rect('#efe0c6',17,15,7,9);
+      rect(ink,9,17,5,5);rect(ink,18,17,5,5);
+      rect('#f2b23c',10,18,3,3);rect('#f2b23c',19,18,3,3);
+      rect(ink,11,19,1,1);rect(ink,20,19,1,1);rect('#ffffff',10,18,1,1);rect('#ffffff',19,18,1,1);
+      rect(ink,15,21,2,4);rect('#e59b3a',15,21,2,3);
+      rect('#d9c3a5',10,25,2,1);rect('#d9c3a5',15,26,2,1);rect('#d9c3a5',20,25,2,1);
+      // Pointed wizard hat with a star and team band.
+      rect(ink,14,0,4,3);rect(ink,12,2,8,4);rect(ink,10,5,12,5);rect(ink,5,9,22,4);
+      rect('#6a4f9a',15,1,2,2);rect('#6a4f9a',13,3,6,3);rect('#6a4f9a',11,6,10,4);rect('#6a4f9a',6,10,20,2);
+      rect(team,11,9,10,1);rect('#ffe9a0',15,6,2,2);
+      // Robe with stars and crystal staff.
+      rect('#c8afe2',10,30,3,4);rect(team,14,30,4,2);rect('#ffe9a0',16,33,2,1);rect('#ffe9a0',11,33,1,1);
+      rect(ink,28,23,2,14);rect('#aa7b53',28,24,1,12);
+      rect(ink,26,18,6,7);rect('#a78fe5',27,19,4,5);
+      rect('#e6dcff',28,19,2,2);rect('#ffe9a0',27,25,4,1);
     }
     this.heroSprites.set(key,sprite);return sprite;
   }
