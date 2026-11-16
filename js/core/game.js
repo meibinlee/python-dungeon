@@ -1,4 +1,4 @@
-import { MAX_DELTA_TIME, MAX_PROJECTILES, PLAYER_1_KEYS, PLAYER_2_KEYS, DAMAGE_NUMBER_TIME, MAX_DAMAGE_EFFECTS, KILL_SCORE, BOSS_SCORE, QUIZ_SCORE, DEMON, DEMON_BONUS, WRONG_FREE, WRONG_PENALTY, DEATH_FREE, DEATH_PENALTY, ULTIMATE, SPEED_BONUS, SOLO } from './config.js?v=20261116-solo';
+import { MAX_DELTA_TIME, MAX_PROJECTILES, PLAYER_1_KEYS, PLAYER_2_KEYS, DAMAGE_NUMBER_TIME, MAX_DAMAGE_EFFECTS, KILL_SCORE, BOSS_SCORE, QUIZ_SCORE, DEMON, DEMON_BONUS, WRONG_FREE, WRONG_PENALTY, DEATH_FREE, DEATH_PENALTY, ULTIMATE, SPEED_BONUS, QUIZ_SPEED_BONUS, SOLO } from './config.js?v=20261116-speed3';
 import { Boss } from '../entities/boss.js';
 import { Player } from '../entities/player.js';
 import { StageSystem } from '../systems/stage.js';
@@ -66,11 +66,19 @@ export class Game {
   // Faster clears earn more: full bonus within par time, then a linear decrease to 0.
   get currentSpeedBonus() {
     const par = this.battlePhase === 'DEMON' ? SPEED_BONUS.demonPar : SPEED_BONUS.stagePar[this.stages.index];
-    return Math.max(0,SPEED_BONUS.max-Math.floor(Math.max(0,this.battleTime-par))*SPEED_BONUS.decayPerSecond);
+    return Math.round(SPEED_BONUS.base*par/Math.max(SPEED_BONUS.minSeconds,this.battleTime));
   }
   recordSpeedBonus(label) { this.speedBonuses.push({ label, seconds:Math.floor(this.battleTime), bonus:this.currentSpeedBonus }); this.updateHud(); }
   recordWrongAnswer() { this.wrongAnswers++; this.updateHud(); }
-  recordCorrectAnswer() { this.correctAnswers++; this.updateHud(); }
+  // answer = { seconds, firstTry } from the quiz; only a first-try correct answer earns quiz speed points.
+  recordCorrectAnswer(answer) {
+    this.correctAnswers++;
+    if (answer?.firstTry && Number.isFinite(answer.seconds)) {
+      const bonus = Math.round(QUIZ_SPEED_BONUS.base*QUIZ_SPEED_BONUS.par/Math.max(QUIZ_SPEED_BONUS.minSeconds,answer.seconds));
+      this.speedBonuses.push({ label:`퀴즈 ${this.correctAnswers}`, seconds:Math.floor(answer.seconds), bonus, quiz:true });
+    }
+    this.updateHud();
+  }
   showInstructions() {
     if (this.state === 'START' || this.state === 'GAME_CLEAR') this.setState('READY');
   }
