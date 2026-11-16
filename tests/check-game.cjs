@@ -7,7 +7,7 @@ const cache = new Map();
 const windowEvents = new Map(), documentEvents = new Map();
 let scheduled = [], hudWrites = 0;
 class Element {
-  constructor(id='') { this.id=id; this.children=[]; this.hidden=false; this.disabled=false; this.listeners={}; this.value=''; this.className=''; this.classList={add:()=>{}}; this.style={}; }
+  constructor(id='') { this.id=id; this.children=[]; this.hidden=false; this.disabled=false; this.listeners={}; this.value=''; this.className=''; this.classes=new Set(); this.classList={add:name=>this.classes.add(name),toggle:(name,force)=>force?this.classes.add(name):this.classes.delete(name),contains:name=>this.classes.has(name)}; this.style={}; }
   set textContent(value) { this.value=value; if (/hp|stage-number|stage-name/.test(this.id)) hudWrites++; }
   get textContent() { return this.children.length ? this.children.map(child => child.textContent).join('') : this.value; }
   addEventListener(type,callback) { this.listeners[type]=callback; }
@@ -361,6 +361,27 @@ function key(code,down=true,extra={}) { let prevented=false; windowEvents.get(do
    const changed=JSON.parse(JSON.stringify(QUESTIONS));const source=changed.find(q=>q.id==='s4-q1'),target=changed.find(q=>q.id==='s4-q2');target.code=source.code;target.choices=['6','7','8','9'];target.answer=0;
    const result=spawnSync('python3',[path.join(root,'tests/check-questions.py')],{input:JSON.stringify({questions:changed,sibling:reference.questions}),encoding:'utf8',timeout:10000});assert.notEqual(result.status,0);assert.match(result.stderr,/duplicate dungeon code template/);
  });
+ check('solo mode: one hero, scaled HP, solo weaknesses, DOWN restarts stage, full flow to CLEAR',()=>{
+   game.returnToStart();game.players[0].setClass('archer');game.setPlayerCount(1);assert.equal(game.players.length,1);assert.ok(game.isSolo);assert.equal(game.allPlayers.length,2);
+   game.startGame();assert.equal(game.state,'PLAYING');assert.equal(game.players[0].x,config.SOLO.spawnX);
+   game.setPlayerCount(2);assert.equal(game.players.length,1);
+   const s=game.stages.current;assert.ok(game.monsters.every(m=>m.maxHp===Math.ceil(s.hp*config.SOLO.hpMultiplier)));
+   key('KeyL');game.update(.05);assert.equal(game.projectiles.length,0);input.clear();
+   const expected=['archer','warrior','mage',null];
+   for(let stage=1;stage<=4;stage++){
+     assert.equal(game.stages.current.id,stage);game.monsters=[];game.update(.01);
+     const boss=game.monsters[0];assert.equal(boss.weakness,expected[stage-1]);assert.equal(boss.maxHp,Math.ceil(game.stages.current.boss.hp*config.SOLO.hpMultiplier));
+     if(stage===2){const p=game.players[0];p.invincibleTime=0;p.takeDamage(9);game.update(.01);assert.equal(game.stages.current.id,2);assert.equal(game.battlePhase,'MONSTERS');assert.ok(p.active);game.monsters=[];game.update(.01);}
+     game.monsters[0].takeDamage(9999);game.update(0);assert.equal(game.state,'QUIZ');
+     quiz.checkAnswer(quiz.question.answer);quiz.continueQuiz();game.continueAfterStage();
+   }
+   for(let i=0;i<3;i++){quiz.checkAnswer(quiz.question.answer);quiz.continueQuiz();}
+   game.beginFinalBattle();assert.equal(game.monsters[0].maxHp,Math.ceil(config.DEMON.hp*config.SOLO.hpMultiplier));
+   const p=game.players[0];p.invincibleTime=0;p.takeDamage(9);game.update(.01);assert.equal(game.demonAttempts,2);assert.equal(game.state,'PLAYING');
+   game.monsters[0].takeDamage(9999);game.update(0);assert.equal(game.state,'GAME_CLEAR');assert.equal(game.demonBonus,400);
+   game.setPlayerCount(2);assert.equal(game.players.length,2);assert.equal(game.allPlayers[0].spawnX,480);game.startGame();
+   assert.ok(game.monsters.every(m=>m.maxHp===game.stages.current.hp));game.returnToStart();
+ });
  // Separate context is unnecessary: UI startup should create exactly one additional chain for this independent integration instance.
  let appGame;const originalStart=Game.prototype.startGame;Game.prototype.startGame=function(){appGame=this;return originalStart.call(this);};
  elements['p1-class'].value='warrior';elements['p2-class'].value='archer';
@@ -382,6 +403,18 @@ function key(code,down=true,extra={}) { let prevented=false; windowEvents.get(do
  check('ability buttons update chosen role, pressed color state and cached detailed sprites',()=>{
    appGame.returnToStart();elements['p1-archer'].click();assert.equal(elements['p1-class'].value,'archer');assert.equal(elements['p1-archer']['aria-pressed'],'true');assert.equal(elements['p1-warrior']['aria-pressed'],'false');elements['start-button'].click();elements['ready-start-button'].click();assert.equal(appGame.players[0].classType,'archer');
    for(const type of Object.keys(config.CLASSES)) {const sprite=renderer.getHeroSprite(type,1);assert.equal(sprite.width,32);assert.equal(sprite.height,40);assert.equal(renderer.getHeroSprite(type,1),sprite);}
+ });
+ check('title 1P/2P selector: solo needs only P1 nickname, hides P2 UI, PLAY AGAIN keeps mode',()=>{
+   appGame.returnToStart();elements['mode-1p'].click();assert.equal(elements['mode-1p']['aria-pressed'],'true');assert.equal(elements['mode-2p']['aria-pressed'],'false');
+   assert.equal(elements['p2-card'].hidden,true);assert.ok(elements['game-shell'].classList.contains('solo'));
+   elements['p1-nickname'].value='솔로';elements['p2-nickname'].value='';elements['start-button'].click();assert.equal(elements['ready-screen'].hidden,false);
+   assert.equal(elements['ready-start-button'].textContent,'1 PLAYER START');assert.equal(elements['ready-p2-card'].hidden,true);assert.equal(elements['ready-solo-tip'].hidden,false);
+   elements['ready-start-button'].click();assert.equal(appGame.players.length,1);assert.equal(appGame.state,'PLAYING');assert.match(elements['team-score'].textContent,/^총점/);
+   appGame.finishQuiz(true);assert.equal(elements['final-p2-card'].hidden,true);elements['final-start-button'].click();appGame.monsters[0].takeDamage(9999);appGame.update(0);
+   assert.equal(elements['result-p2-card'].hidden,true);assert.match(elements['result-team-score'].textContent,/^총점/);
+   elements['result-button'].click();assert.equal(elements['ready-start-button'].textContent,'1 PLAYER START');elements['ready-start-button'].click();assert.equal(appGame.players.length,1);
+   appGame.returnToStart();elements['mode-2p'].click();assert.equal(elements['p2-card'].hidden,false);assert.equal(elements['game-shell'].classList.contains('solo'),false);
+   elements['start-button'].click();assert.match(elements['loading-message'].textContent,/PLAYER 2/);elements['p2-nickname'].value='코코';elements['start-button'].click();elements['ready-start-button'].click();assert.equal(appGame.players.length,2);
  });
  console.log(`\n${checks} checks passed. No runtime exceptions.`);
 })().catch(error=>{console.error(error);process.exitCode=1;});
