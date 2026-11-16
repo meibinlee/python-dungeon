@@ -4,6 +4,7 @@ import { Renderer } from './core/renderer.js?v=20261116-heroes';
 import { Game } from './core/game.js?v=20261116-speed3';
 import { QuizSystem } from './systems/quiz.js?v=20261116-speed3';
 import { NICKNAME_MAX_LENGTH, CLASSES, QUIZ_SCORE } from './core/config.js';
+import { leaderboardEnabled, recordName, submitScore } from './systems/leaderboard.js?v=20261116-top5';
 
 async function initialize() {
   const ids = ['game','start-screen','start-button','loading-message','ready-screen','ready-start-button','ready-back-button','pause-screen','pause-button','resume-button','home-button','hud','p1-hp','p2-hp','stage-number','stage-name','result-screen','result-eyebrow','result-title','result-message','result-button'];
@@ -12,8 +13,38 @@ async function initialize() {
   ids.push('final-ready-screen','final-start-button');
   ids.push('p1-class','p2-class','p1-preview','p2-preview','result-quiz-score');
   ids.push('mode-1p','mode-2p','p2-card','p2-hud','ready-title','ready-p2-card','ready-item-tip','ready-solo-tip','ready-ultimate-keys','final-p2-card','final-retry-rule','result-p2-card','game-shell');
+  ids.push('leaderboard','leaderboard-list','leaderboard-status');
   for (const id of [1,2]) for (const type of Object.keys(CLASSES)) ids.push(`p${id}-${type}`);
   const ui = Object.fromEntries(ids.map(id => [id,document.getElementById(id)]));
+  // Shared TOP 5: one request on the final CLEAR screen only (never during gameplay).
+  // 2P records "닉네임1/닉네임2", 1P records "닉네임". Failures never affect the game.
+  let leaderboardRun = 0;
+  const renderLeaderboard = (top,newId) => {
+    ui['leaderboard-list'].replaceChildren(...top.map((row,index) => {
+      const item = document.createElement('li');
+      if (row.id === newId) item.className = 'new-record';
+      const name = document.createElement('span'); name.textContent = `${index+1}. ${row.name}`;
+      const score = document.createElement('strong'); score.textContent = `${row.score}점`;
+      item.append(name,score); return item;
+    }));
+  };
+  async function showLeaderboard(game) {
+    ui['leaderboard'].hidden = !leaderboardEnabled();
+    if (!leaderboardEnabled()) return;
+    const run = ++leaderboardRun;
+    ui['leaderboard-list'].replaceChildren();
+    ui['leaderboard-status'].textContent = '기록을 저장하는 중...';
+    try {
+      const result = await submitScore(recordName(game.players),game.totalScore,game.players.length);
+      if (run !== leaderboardRun) return;
+      renderLeaderboard(result.top || [],result.id);
+      ui['leaderboard-status'].textContent = result.id ? '🎉 TOP 5에 이름을 올렸어요!' : 'TOP 5에 들려면 조금 더 빨리 도전해 보세요!';
+    } catch (error) {
+      if (run !== leaderboardRun) return;
+      console.warn('Leaderboard unavailable',error);
+      ui['leaderboard-status'].textContent = '지금은 기록판에 연결할 수 없어요. (게임 점수는 그대로예요)';
+    }
+  }
   try {
     const assets = new Assets();
     await assets.preload(ESSENTIAL_ASSETS);
@@ -70,6 +101,7 @@ async function initialize() {
           }
           ui['result-quiz-score'].textContent = `공통 퀴즈 정답 ${game.correctAnswers}개 · ${game.correctAnswers*QUIZ_SCORE}점 · 마왕 ${game.demonAttempts}차 승리 +${game.demonBonus}점 · 스피드 보너스 +${game.speedBonus}점 (${game.speedBonuses.map(record => `${record.label} ${record.seconds}초 +${record.bonus}`).join(', ')}) · 오답 ${game.wrongAnswers}회 / DOWN ${game.deaths}회 감점 −${game.penalty}점`;
           ui['result-team-score'].textContent = `${game.isSolo ? '총점' : '협력 총점'} ${game.totalScore}점`;
+          showLeaderboard(game);
         }
         ui['result-eyebrow'].textContent = final ? 'CODE QUEST' : 'CORRECT!';
         ui['result-title'].textContent = final ? 'CLEAR!' : 'STAGE CLEAR!';
