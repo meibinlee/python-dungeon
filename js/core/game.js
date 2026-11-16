@@ -1,4 +1,4 @@
-import { MAX_DELTA_TIME, MAX_PROJECTILES, PLAYER_1_KEYS, PLAYER_2_KEYS, DAMAGE_NUMBER_TIME, MAX_DAMAGE_EFFECTS, KILL_SCORE, BOSS_SCORE, QUIZ_SCORE, DEMON, DEMON_BONUS, WRONG_FREE, WRONG_PENALTY, DEATH_FREE, DEATH_PENALTY, ULTIMATE } from './config.js';
+import { MAX_DELTA_TIME, MAX_PROJECTILES, PLAYER_1_KEYS, PLAYER_2_KEYS, DAMAGE_NUMBER_TIME, MAX_DAMAGE_EFFECTS, KILL_SCORE, BOSS_SCORE, QUIZ_SCORE, DEMON, DEMON_BONUS, WRONG_FREE, WRONG_PENALTY, DEATH_FREE, DEATH_PENALTY, ULTIMATE, SPEED_BONUS } from './config.js?v=20261116-speed';
 import { Boss } from '../entities/boss.js';
 import { Player } from '../entities/player.js';
 import { StageSystem } from '../systems/stage.js';
@@ -43,9 +43,16 @@ export class Game {
   }
   startGame() { this.correctAnswers = 0; this.resetPenalties(); this.players.forEach(player => player.resetStats()); this.stages.reset(); this.startStage(); }
   getScore(player) { return (player.kills-player.bossKills)*KILL_SCORE+player.bossKills*BOSS_SCORE; }
-  resetPenalties() { this.wrongAnswers=0; this.deaths=0; this.demonAttempts=0; this.demonBonus=0; this.explosions=[]; }
+  resetPenalties() { this.wrongAnswers=0; this.deaths=0; this.demonAttempts=0; this.demonBonus=0; this.explosions=[]; this.speedBonuses=[]; this.battleTime=0; }
   get penalty() { return Math.max(0,this.wrongAnswers-WRONG_FREE)*WRONG_PENALTY+Math.max(0,this.deaths-DEATH_FREE)*DEATH_PENALTY; }
-  get totalScore() { return Math.max(0,this.players.reduce((total,player) => total+this.getScore(player),this.correctAnswers*QUIZ_SCORE)+this.demonBonus-this.penalty); }
+  get speedBonus() { return this.speedBonuses.reduce((total,record) => total+record.bonus,0); }
+  get totalScore() { return Math.max(0,this.players.reduce((total,player) => total+this.getScore(player),this.correctAnswers*QUIZ_SCORE)+this.demonBonus+this.speedBonus-this.penalty); }
+  // Faster clears earn more: full bonus within par time, then a linear decrease to 0.
+  get currentSpeedBonus() {
+    const par = this.battlePhase === 'DEMON' ? SPEED_BONUS.demonPar : SPEED_BONUS.stagePar[this.stages.index];
+    return Math.max(0,SPEED_BONUS.max-Math.floor(Math.max(0,this.battleTime-par))*SPEED_BONUS.decayPerSecond);
+  }
+  recordSpeedBonus(label) { this.speedBonuses.push({ label, seconds:Math.floor(this.battleTime), bonus:this.currentSpeedBonus }); }
   recordWrongAnswer() { this.wrongAnswers++; this.updateHud(); }
   recordCorrectAnswer() { this.correctAnswers++; this.updateHud(); }
   showInstructions() {
@@ -76,6 +83,8 @@ export class Game {
     // A failed attempt does not inflate the final score by farming the same stage.
     this.stageQuizCount = this.correctAnswers;
     this.stageStats = this.players.map(player => ({ kills:player.kills, bossKills:player.bossKills }));
+    this.stageSpeedCount = this.speedBonuses.length;
+    this.battleTime = 0;
     this.players.forEach(player => player.reset());
     this.players.forEach(player => player.setLevel(this.stages.current.id));
     this.projectiles = [];
@@ -91,6 +100,7 @@ export class Game {
   }
   restartStage() {
     this.correctAnswers = this.stageQuizCount;
+    this.speedBonuses.length = this.stageSpeedCount;
     this.players.forEach((player,index) => Object.assign(player,this.stageStats[index]));
     this.startStage(); this.restartNotice = 2;
   }
@@ -112,12 +122,14 @@ export class Game {
   startDemonBattle() {
     this.demonAttempts++;
     this.battlePhase = 'DEMON';
+    this.battleTime = 0;
     this.players.forEach(player => { player.reset(true); player.setLevel(5); player.ultimateCooldown=0; });
     this.monsters = [new Boss({...DEMON,isDemon:true})];
     this.projectiles=[]; this.items=[]; this.damageEffects=[]; this.explosions=[];
     this.setState('PLAYING'); this.updateHud();
   }
   clearGame() {
+    this.recordSpeedBonus('PYTHON 마왕');
     this.demonBonus = Math.max(DEMON_BONUS.minimum,DEMON_BONUS.first-(this.demonAttempts-1)*DEMON_BONUS.decrement);
     this.setState('GAME_CLEAR'); this.updateHud(); this.events.onResult(true,true);
   }
@@ -133,6 +145,7 @@ export class Game {
   update(dt) {
     if (this.state !== 'PLAYING') return;
     this.restartNotice = Math.max(0,this.restartNotice-dt);
+    this.battleTime += dt;
     for (const effect of this.explosions) effect.time -= dt;
     this.explosions = this.explosions.filter(effect => effect.time > 0);
     for (const effect of this.damageEffects) effect.time -= dt;
@@ -162,12 +175,12 @@ export class Game {
     if (this.stages.isComplete(this.monsters)) {
       if (this.battlePhase === 'DEMON') { this.clearGame(); return; }
       if (this.battlePhase === 'MONSTERS' && this.stages.current.boss) this.startBossBattle();
-      else this.startTeacherQuiz();
+      else { this.recordSpeedBonus(`STAGE ${this.stages.current.id}`); this.startTeacherQuiz(); }
     }
   }
   updateHud() {
     const boss = this.monsters.find(monster => monster.isBoss);
-    const values = `${this.wrongAnswers}:${this.deaths}:${this.demonAttempts}:${this.demonBonus}:${this.correctAnswers}:${this.stages.current.id}:${this.battlePhase}:${boss ? Math.ceil(boss.hp) : ''}:${this.players.map(player => `${player.hp}/${player.maxHp}/${player.attackMultiplier}/${player.kills}/${player.bossKills}/${player.classType}/${player.nickname}/${player.level}/${this.battlePhase === 'DEMON' ? Math.ceil(player.ultimateCooldown) : ''}`).join(':')}`;
+    const values = `${this.state === 'PLAYING' ? Math.floor(this.battleTime) : ''}:${this.speedBonus}:${this.wrongAnswers}:${this.deaths}:${this.demonAttempts}:${this.demonBonus}:${this.correctAnswers}:${this.stages.current.id}:${this.battlePhase}:${boss ? Math.ceil(boss.hp) : ''}:${this.players.map(player => `${player.hp}/${player.maxHp}/${player.attackMultiplier}/${player.kills}/${player.bossKills}/${player.classType}/${player.nickname}/${player.level}/${this.battlePhase === 'DEMON' ? Math.ceil(player.ultimateCooldown) : ''}`).join(':')}`;
     if (values === this.hudCache) return;
     this.hudCache = values;
     this.events.onHud(this.players,this.stages.current,boss);
