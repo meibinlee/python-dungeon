@@ -1,8 +1,8 @@
 import { Assets, ESSENTIAL_ASSETS, LATER_ASSETS } from './core/assets.js';
 import { Input } from './core/input.js';
 import { Renderer } from './core/renderer.js?v=20261116-heroes';
-import { Game } from './core/game.js?v=20261116-solo';
-import { QuizSystem } from './systems/quiz.js?v=20261116-quiz';
+import { Game } from './core/game.js?v=20261116-speed3';
+import { QuizSystem } from './systems/quiz.js?v=20261116-speed3';
 import { NICKNAME_MAX_LENGTH, CLASSES, QUIZ_SCORE } from './core/config.js';
 
 async function initialize() {
@@ -20,7 +20,7 @@ async function initialize() {
     const input = new Input();
     const renderer = new Renderer(ui.game,assets);
     let game;
-    const quiz = new QuizSystem(final => game.finishQuiz(final),() => game.recordCorrectAnswer(),() => game.recordWrongAnswer());
+    const quiz = new QuizSystem(final => game.finishQuiz(final),answer => game.recordCorrectAnswer(answer),() => game.recordWrongAnswer());
     game = new Game(input,renderer, {
       onState(state) {
         ui['start-screen'].hidden = state !== 'START';
@@ -68,7 +68,7 @@ async function initialize() {
             ui[`result-p${player.id}-details`].textContent = `일반 적 ${player.kills-player.bossKills}마리 · 보스 ${player.bossKills}마리`;
             ui[`result-p${player.id}-score`].textContent = `${game.getScore(player)}점`;
           }
-          ui['result-quiz-score'].textContent = `공통 퀴즈 정답 ${game.correctAnswers}개 · ${game.correctAnswers*QUIZ_SCORE}점 · 마왕 ${game.demonAttempts}차 승리 +${game.demonBonus}점 · 스피드 보너스 +${game.speedBonus}점 (${game.speedBonuses.map(record => `${record.label} ${record.seconds}초`).join(', ')}) · 오답 ${game.wrongAnswers}회 / DOWN ${game.deaths}회 감점 −${game.penalty}점`;
+          ui['result-quiz-score'].textContent = `공통 퀴즈 정답 ${game.correctAnswers}개 · ${game.correctAnswers*QUIZ_SCORE}점 · 마왕 ${game.demonAttempts}차 승리 +${game.demonBonus}점 · 스피드 보너스 +${game.speedBonus}점 (${game.speedBonuses.map(record => `${record.label} ${record.seconds}초 +${record.bonus}`).join(', ')}) · 오답 ${game.wrongAnswers}회 / DOWN ${game.deaths}회 감점 −${game.penalty}점`;
           ui['result-team-score'].textContent = `${game.isSolo ? '총점' : '협력 총점'} ${game.totalScore}점`;
         }
         ui['result-eyebrow'].textContent = final ? 'CODE QUEST' : 'CORRECT!';
