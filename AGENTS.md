@@ -1874,3 +1874,13 @@ This is the latest handoff and supersedes earlier statements that changes are lo
 - Max total = 250 + 500 + 700 + 500 + 550 = 2500. HUD shows elapsed seconds and current bonus; result screen lists per-battle times. Par times are initial guesses; classroom playtesting may need tuning.
 - Cache version `20261116-speed` on main.js, game.js and game.js's config import. 61 automated checks pass.
 - Browser playtest (2026-11-16, live site, scripted bot with invincibility to reach the end): full flow reached exactly 2500 (stage times 6/10/13/19s, demon 34s). Pause froze timer; 65s on Stage 1 gave 60 bonus. Fixed stale HUD during quiz (setState and recordSpeedBonus now refresh HUD). Cache version `20261116-speed2`. Par times look generous versus bot clears; tune after classroom play.
+
+
+# 80. v1.2.0 1P/2P mode (2026-11-16)
+
+- User requested both solo and two-player play, chosen on the title screen. Title has `#mode-1p` / `#mode-2p` buttons (aria-pressed); default 2P. Mode persists on PLAY AGAIN; changeable only from menus (`Game.setPlayerCount` ignores calls outside START/READY/GAME_CLEAR).
+- `Game.allPlayers` always holds both heroes; `Game.players` is the active subset (1 or 2), so existing loops/collision/renderer/scoring work unchanged. Main.js wires ability buttons/previews over `allPlayers`.
+- Solo: P1 spawns at center (`SOLO.spawnX/Y`), P2 card/ready box/final box/result card hidden, P2 HUD slot kept invisible to keep the stage title centered (`.solo` class on `#game-shell`). P2 nickname not required.
+- Solo balance (initial guess, tune after play): monster/boss/demon HP × `SOLO.hpMultiplier` 0.6 rounded up. Solo DOWN = all players down → stage retry / demon retry (no 3s respawn). Solo weakness: stage1 = chosen ability, stages 2–3 = other two abilities in CLASSES order, stage4 none. Score rules and 2500 max unchanged; UI says 총점 instead of 협력 총점.
+- Cache version `20261116-solo` on main.js, game.js and game.js's config import. 63 automated checks pass (2 new: solo engine flow, title selector UI). Headless Chrome screenshots of title (1P/2P), ready and Stage 1 solo HUD checked at 1366×768; title fits at 1280×720 and 1024×600; no console errors.
+- Published via GitHub web editor in the user's logged-in Chrome (9 commits, one per file) because this session's gh token was invalid and the Claude GitHub App lacked push access.
