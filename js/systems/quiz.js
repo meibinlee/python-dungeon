@@ -56,6 +56,7 @@ export class QuizSystem {
     this.ui = Object.fromEntries(['quiz-screen','quiz-title','quiz-code','quiz-choices','quiz-feedback','quiz-progress','quiz-continue'].map(id => [id, document.getElementById(id)]));
     this.ui['quiz-continue'].addEventListener('click', () => this.continueQuiz());
   }
+  now() { return Date.now(); }
   resetRun() { this.seen = new Set(); this.questionCount=0; }
   pickQuestion(pool) {
     const unseen = pool.filter(question => !this.seen.has(question.id));
@@ -63,12 +64,14 @@ export class QuizSystem {
   }
   startStage(stage) {
     this.final = false;
+    this.missed = false;
     this.pool = QUESTIONS.filter(q => q.stage === stage);
     this.stage = stage;
     this.showQuestion(this.pickQuestion(this.pool));
   }
   startFinal() {
     this.final = true;
+    this.missed = false;
     this.pool = [...QUESTIONS];
     this.solved = new Set();
     const unseen = this.pool.filter(question => !this.seen.has(question.id));
@@ -79,6 +82,7 @@ export class QuizSystem {
   showQuestion(base) {
     const question = presentQuestion(base);
     this.question = question;
+    this.shownAt = this.now();
     this.seen.add(question.id);
     this.locked = false;
     this.questionCount++;
@@ -114,10 +118,12 @@ export class QuizSystem {
     for (const button of this.ui['quiz-choices'].children) button.disabled = true;
     const feedback = this.ui['quiz-feedback'];
     if (this.correct) {
-      this.onCorrect();
+      // Seconds from showing this question; a wrong answer earlier in this quiz forfeits the speed bonus.
+      this.onCorrect({ seconds:(this.now()-this.shownAt)/1000, firstTry:!this.missed });
       if (this.final) this.solved.add(this.question.id);
       feedback.textContent = this.final ? `CORRECT!\n${this.solved.size} / 3 문제 해결!` : 'CORRECT!\nSTAGE CLEAR!';
     } else {
+      this.missed = true;
       this.onWrong();
       feedback.classList.add('wrong');
       feedback.textContent = 'WRONG!\n다시 생각해 보세요!';
@@ -147,6 +153,7 @@ export class QuizSystem {
       this.showQuestion(next);
     } else {
       this.queue.shift();
+      this.missed = false;
       this.showQuestion(this.queue[0]);
     }
   }
