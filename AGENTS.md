@@ -1866,3 +1866,10 @@ This is the latest handoff and supersedes earlier statements that changes are lo
 - User confirmed the demon appearance. School-device playtesting will be performed by the user later.
 - README now matches final quiz → briefing → demon → CLEAR, distance-based Stage 4 hit counts, current hero art and demon retry rules. Gameplay code is unchanged.
 - User authorized committing, pushing and deploying this completed baseline. Confirm deployment result in the session; do not infer success from this record alone.
+
+
+# 79. v1.1.0 speed bonus (2026-11-16)
+
+- User requested max score 2500 by rewarding faster kills. Added team `SPEED_BONUS` (config): each of 5 battles (Stage 1–4 monsters+boss, demon attempt) awards max 110 within par (40/45/50/60s, demon 60s), −2 per second over par, floor 0. Timer accumulates only in PLAYING; resets per stage attempt/demon attempt; stage rollback removes nothing already-awarded (bonus is recorded at boss death, before quiz).
+- Max total = 250 + 500 + 700 + 500 + 550 = 2500. HUD shows elapsed seconds and current bonus; result screen lists per-battle times. Par times are initial guesses; classroom playtesting may need tuning.
+- Cache version `20261116-speed` on main.js, game.js and game.js's config import. 61 automated checks pass.
