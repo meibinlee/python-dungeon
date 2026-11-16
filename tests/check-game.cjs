@@ -307,6 +307,18 @@ function key(code,down=true,extra={}) { let prevented=false; windowEvents.get(do
    game.update(0);assert.equal(game.demonAttempts,2);assert.equal(game.correctAnswers,7);assert.equal(game.deaths,2);assert.equal(game.monsters[0].hp,config.DEMON.hp);
    game.monsters[0].takeDamage(999);game.update(0);assert.equal(game.state,'GAME_CLEAR');assert.equal(game.demonBonus,400);
  });
+ check('speed bonus: faster clears score more, rollback on retry, perfect run totals 2500',()=>{
+   game.startGame();game.monsters=[];game.battlePhase='BOSS';game.battleTime=40;game.update(0);assert.equal(game.speedBonus,110);assert.equal(game.state,'QUIZ');
+   game.setState('PLAYING');game.battleTime=50.9;game.monsters=[];game.battlePhase='BOSS';game.update(0);assert.equal(game.speedBonuses[1].bonus,90);
+   game.setState('PLAYING');game.battlePhase='BOSS';game.battleTime=999;game.monsters=[];game.update(0);assert.equal(game.speedBonuses[2].bonus,0);
+   game.stages.index=1;game.startStage();game.speedBonuses.push({bonus:50});game.restartStage();assert.equal(game.speedBonuses.length,3);
+   game.setState('PAUSED');const t=game.battleTime;game.update(5);assert.equal(game.battleTime,t);
+   game.startGame();assert.equal(game.speedBonus,0);
+   // Perfect run: 25 regular + 5 boss kills, 7 correct answers, first-try demon, every battle within par.
+   const [p1]=game.players;p1.kills=30;p1.bossKills=5;game.correctAnswers=7;game.demonAttempts=1;
+   game.speedBonuses=Array.from({length:5},()=>({bonus:config.SPEED_BONUS.max}));game.demonBonus=config.DEMON_BONUS.first;
+   assert.equal(game.totalScore,2500);
+ });
  check('wrong/death penalties survive stage rollback, clamp total and reset new run',()=>{
    game.startGame();for(let i=0;i<5;i++)game.recordWrongAnswer();game.deaths=4;assert.equal(game.penalty,50);assert.equal(game.totalScore,0);game.restartStage();assert.equal(game.penalty,50);
    const scored=new QuizSystem(()=>{},()=>{},()=>game.recordWrongAnswer());scored.startStage(1);const wrong=(scored.question.answer+1)%4;scored.checkAnswer(wrong);scored.checkAnswer(wrong);assert.equal(game.wrongAnswers,6);
@@ -360,7 +372,7 @@ function key(code,down=true,extra={}) { let prevented=false; windowEvents.get(do
    elements['start-button'].click();elements['ready-start-button'].click();assert.equal(elements['p1-name'].textContent,'P1 루나');assert.equal(elements['p2-name'].textContent,'P2 코코');assert.equal(appGame.players[0].classType,'warrior');assert.equal(appGame.players[1].classType,'archer');
    appGame.finishQuiz(true);assert.equal(elements['final-ready-screen'].hidden,false);assert.equal(appGame.state,'FINAL_READY');elements['final-start-button'].click();assert.equal(elements['final-ready-screen'].hidden,true);assert.equal(appGame.battlePhase,'DEMON');
    appGame.players[0].kills=3;appGame.correctAnswers=3;appGame.players[1].kills=2;appGame.players[1].bossKills=1;appGame.monsters[0].takeDamage(999);appGame.update(0);
-   assert.equal(elements['result-p1-score'].textContent,'30점');assert.equal(elements['result-p2-score'].textContent,'110점');assert.equal(elements['result-team-score'].textContent,'협력 총점 940점');assert.equal(elements['result-scores'].hidden,false);
+   assert.equal(elements['result-p1-score'].textContent,'30점');assert.equal(elements['result-p2-score'].textContent,'110점');assert.equal(elements['result-team-score'].textContent,'협력 총점 1050점');assert.equal(elements['result-scores'].hidden,false);
    elements['result-button'].click();elements['ready-start-button'].click();assert.equal(appGame.totalScore,0);assert.equal(appGame.players[0].nickname,'루나');
  });
  check('changed names/classes refresh HUD even when score and HP match previous game',()=>{
