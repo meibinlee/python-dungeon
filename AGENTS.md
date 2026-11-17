@@ -1914,3 +1914,9 @@ This is the latest handoff and supersedes earlier statements that changes are lo
 - Client: `js/systems/leaderboard.js` (fetch REST with publishable key header, 6s timeout). `LEADERBOARD` in config.js holds URL + publishable key (public by design; never put the secret key in the repo). main.js `showLeaderboard(game)` runs once from onResult(final); renders list, highlights returned id, status text; failures show a notice only.
 - Known limits told to user: client-computed scores can be forged; free projects pause after 7 days of inactivity (Resume in dashboard). Fixed stale result-screen score rule text (old 110-cap wording).
 - Cache version `20261116-top5` (index→main, main→leaderboard, leaderboard→config). 65 checks pass (new async leaderboard check; DOM mock replaceChildren now keeps arguments).
+
+# 85. v1.6.0 title-screen TOP 5 (2026-11-17)
+
+- User asked for the TOP 5 ranking table on the right side of the start screen. Added `<aside id="title-leaderboard">` (명예의 전당) beside `.start-panel` inside `#start-screen` (flex row). main.js `showTitleLeaderboard()` calls `fetchTop()` once after load and each time state becomes START (guarded against overlapping requests); rows share `leaderboardRows()` with the CLEAR-screen list. Hidden when LEADERBOARD config is empty; failure shows a notice only. Never runs during gameplay.
+- CSS: 220px aside (170px at ≤900px/≤700px tall), gold/silver/bronze row tint for 1–3, long names ellipsized, hidden below 640px width.
+- Cache version `20261117-titletop5` on index→main. 65 checks pass (leaderboard check now also covers the title read and list). Headless Chrome screenshots at 1366×768, 1280×720, 1024×600 with mocked data: no overlap/overflow, no page errors.
