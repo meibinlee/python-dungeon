@@ -14,7 +14,7 @@ async function initialize() {
   ids.push('p1-class','p2-class','p1-preview','p2-preview','result-quiz-score');
   ids.push('mode-1p','mode-2p','p2-card','p2-hud','ready-title','ready-p2-card','ready-item-tip','ready-solo-tip','ready-ultimate-keys','final-p2-card','final-retry-rule','result-p2-card','game-shell');
   ids.push('leaderboard','leaderboard-list','leaderboard-status');
-  ids.push('title-leaderboard','title-leaderboard-list','title-leaderboard-status');
+  ids.push('title-leaderboard','title-leaderboard-list','title-leaderboard-status','title-leaderboard-refresh');
   for (const id of [1,2]) for (const type of Object.keys(CLASSES)) ids.push(`p${id}-${type}`);
   const ui = Object.fromEntries(ids.map(id => [id,document.getElementById(id)]));
   // Shared TOP 5: a read on the title screen and one submit on the final CLEAR screen (never during gameplay).
@@ -34,15 +34,17 @@ async function initialize() {
     ui['title-leaderboard'].hidden = !leaderboardEnabled();
     if (!leaderboardEnabled() || titleBoardLoading) return;
     titleBoardLoading = true;
+    ui['title-leaderboard-refresh'].disabled = true;
+    ui['title-leaderboard-status'].textContent = '기록을 불러오는 중...';
     try {
       const top = await fetchTop();
       const rows = Array.isArray(top) ? top : [];
       ui['title-leaderboard-list'].replaceChildren(...leaderboardRows(rows));
-      ui['title-leaderboard-status'].textContent = rows.length ? '게임을 클리어하면 기록에 도전!' : '아직 기록이 없어요. 첫 주인공이 되어 보세요!';
+      ui['title-leaderboard-status'].textContent = rows.length ? '게임을 클리어하고 기록에 도전!' : '아직 기록이 없어요. 첫 주인공이 되어 보세요!';
     } catch (error) {
       console.warn('Leaderboard unavailable',error);
       ui['title-leaderboard-status'].textContent = '지금은 기록판에 연결할 수 없어요.';
-    } finally { titleBoardLoading = false; }
+    } finally { titleBoardLoading = false; ui['title-leaderboard-refresh'].disabled = false; }
   }
   async function showLeaderboard(game) {
     ui['leaderboard'].hidden = !leaderboardEnabled();
@@ -161,6 +163,7 @@ async function initialize() {
     ui['start-button'].disabled = false;
     ui['start-button'].textContent = '게임 시작';
     showTitleLeaderboard();
+    ui['title-leaderboard-refresh'].addEventListener('click',() => showTitleLeaderboard());
     ui['start-button'].addEventListener('click', () => {
       for (const player of game.players) {
         const field = ui[`p${player.id}-nickname`];
