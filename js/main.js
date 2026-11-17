@@ -4,7 +4,7 @@ import { Renderer } from './core/renderer.js?v=20261116-heroes';
 import { Game } from './core/game.js?v=20261116-speed3';
 import { QuizSystem } from './systems/quiz.js?v=20261116-speed3';
 import { NICKNAME_MAX_LENGTH, CLASSES, QUIZ_SCORE } from './core/config.js';
-import { leaderboardEnabled, recordName, submitScore } from './systems/leaderboard.js?v=20261116-top5';
+import { leaderboardEnabled, recordName, submitScore, fetchTop } from './systems/leaderboard.js?v=20261116-top5';
 
 async function initialize() {
   const ids = ['game','start-screen','start-button','loading-message','ready-screen','ready-start-button','ready-back-button','pause-screen','pause-button','resume-button','home-button','hud','p1-hp','p2-hp','stage-number','stage-name','result-screen','result-eyebrow','result-title','result-message','result-button'];
@@ -14,20 +14,36 @@ async function initialize() {
   ids.push('p1-class','p2-class','p1-preview','p2-preview','result-quiz-score');
   ids.push('mode-1p','mode-2p','p2-card','p2-hud','ready-title','ready-p2-card','ready-item-tip','ready-solo-tip','ready-ultimate-keys','final-p2-card','final-retry-rule','result-p2-card','game-shell');
   ids.push('leaderboard','leaderboard-list','leaderboard-status');
+  ids.push('title-leaderboard','title-leaderboard-list','title-leaderboard-status');
   for (const id of [1,2]) for (const type of Object.keys(CLASSES)) ids.push(`p${id}-${type}`);
   const ui = Object.fromEntries(ids.map(id => [id,document.getElementById(id)]));
-  // Shared TOP 5: one request on the final CLEAR screen only (never during gameplay).
+  // Shared TOP 5: a read on the title screen and one submit on the final CLEAR screen (never during gameplay).
   // 2P records "닉네임1/닉네임2", 1P records "닉네임". Failures never affect the game.
   let leaderboardRun = 0;
-  const renderLeaderboard = (top,newId) => {
-    ui['leaderboard-list'].replaceChildren(...top.map((row,index) => {
+  const leaderboardRows = (top,newId) => top.map((row,index) => {
       const item = document.createElement('li');
       if (row.id === newId) item.className = 'new-record';
       const name = document.createElement('span'); name.textContent = `${index+1}. ${row.name}`;
       const score = document.createElement('strong'); score.textContent = `${row.score}점`;
       item.append(name,score); return item;
-    }));
-  };
+    });
+  const renderLeaderboard = (top,newId) => ui['leaderboard-list'].replaceChildren(...leaderboardRows(top,newId));
+  // Title-screen TOP 5 (right side): one read request whenever the title screen opens.
+  let titleBoardLoading = false;
+  async function showTitleLeaderboard() {
+    ui['title-leaderboard'].hidden = !leaderboardEnabled();
+    if (!leaderboardEnabled() || titleBoardLoading) return;
+    titleBoardLoading = true;
+    try {
+      const top = await fetchTop();
+      const rows = Array.isArray(top) ? top : [];
+      ui['title-leaderboard-list'].replaceChildren(...leaderboardRows(rows));
+      ui['title-leaderboard-status'].textContent = rows.length ? '게임을 클리어하면 기록에 도전!' : '아직 기록이 없어요. 첫 주인공이 되어 보세요!';
+    } catch (error) {
+      console.warn('Leaderboard unavailable',error);
+      ui['title-leaderboard-status'].textContent = '지금은 기록판에 연결할 수 없어요.';
+    } finally { titleBoardLoading = false; }
+  }
   async function showLeaderboard(game) {
     ui['leaderboard'].hidden = !leaderboardEnabled();
     if (!leaderboardEnabled()) return;
@@ -55,6 +71,7 @@ async function initialize() {
     game = new Game(input,renderer, {
       onState(state) {
         ui['start-screen'].hidden = state !== 'START';
+        if (state === 'START') showTitleLeaderboard();
         ui['ready-screen'].hidden = state !== 'READY';
         ui['final-ready-screen'].hidden = state !== 'FINAL_READY';
         ui['pause-screen'].hidden = state !== 'PAUSED';
@@ -143,6 +160,7 @@ async function initialize() {
     ui['mode-2p'].addEventListener('click',() => applyPlayerCount(2));
     ui['start-button'].disabled = false;
     ui['start-button'].textContent = '게임 시작';
+    showTitleLeaderboard();
     ui['start-button'].addEventListener('click', () => {
       for (const player of game.players) {
         const field = ui[`p${player.id}-nickname`];
