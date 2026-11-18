@@ -4,7 +4,7 @@ import { Renderer } from './core/renderer.js?v=20261116-heroes';
 import { Game } from './core/game.js?v=20261116-speed3';
 import { QuizSystem } from './systems/quiz.js?v=20261116-speed3';
 import { NICKNAME_MAX_LENGTH, CLASSES, QUIZ_SCORE } from './core/config.js';
-import { leaderboardEnabled, recordName, submitScore, fetchTop } from './systems/leaderboard.js?v=20261116-top5';
+import { leaderboardEnabled, recordName, submitScore, fetchTop } from './systems/leaderboard.js?v=20261118-top10';
 
 async function initialize() {
   const ids = ['game','start-screen','start-button','loading-message','ready-screen','ready-start-button','ready-back-button','pause-screen','pause-button','resume-button','home-button','hud','p1-hp','p2-hp','stage-number','stage-name','result-screen','result-eyebrow','result-title','result-message','result-button'];
@@ -17,7 +17,7 @@ async function initialize() {
   ids.push('title-leaderboard','title-leaderboard-list','title-leaderboard-status','title-leaderboard-refresh');
   for (const id of [1,2]) for (const type of Object.keys(CLASSES)) ids.push(`p${id}-${type}`);
   const ui = Object.fromEntries(ids.map(id => [id,document.getElementById(id)]));
-  // Shared TOP 5: a read on the title screen and one submit on the final CLEAR screen (never during gameplay).
+  // Shared TOP 10: a read on the title screen and one submit on the final CLEAR screen (never during gameplay).
   // 2P records "닉네임1/닉네임2", 1P records "닉네임". Failures never affect the game.
   let leaderboardRun = 0;
   const leaderboardRows = (top,newId) => top.map((row,index) => {
@@ -28,7 +28,7 @@ async function initialize() {
       item.append(name,score); return item;
     });
   const renderLeaderboard = (top,newId) => ui['leaderboard-list'].replaceChildren(...leaderboardRows(top,newId));
-  // Title-screen TOP 5 (right side): one read request whenever the title screen opens.
+  // Title-screen TOP 10 (right side): one read request whenever the title screen opens.
   let titleBoardLoading = false;
   async function showTitleLeaderboard() {
     ui['title-leaderboard'].hidden = !leaderboardEnabled();
@@ -56,7 +56,7 @@ async function initialize() {
       const result = await submitScore(recordName(game.players),game.totalScore,game.players.length);
       if (run !== leaderboardRun) return;
       renderLeaderboard(result.top || [],result.id);
-      ui['leaderboard-status'].textContent = result.id ? '🎉 TOP 5에 이름을 올렸어요!' : 'TOP 5에 들려면 조금 더 빨리 도전해 보세요!';
+      ui['leaderboard-status'].textContent = result.id ? '🎉 TOP 10에 이름을 올렸어요!' : 'TOP 10에 들려면 조금 더 빨리 도전해 보세요!';
     } catch (error) {
       if (run !== leaderboardRun) return;
       console.warn('Leaderboard unavailable',error);

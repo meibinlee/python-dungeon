@@ -1,7 +1,7 @@
--- CODE QUEST shared TOP 5 leaderboard (v1.5.0).
+-- CODE QUEST shared TOP 10 leaderboard (v1.7.0; TOP 5 in v1.5.0). Table name kept as code_quest_top5.
 -- Run once in the Supabase SQL Editor. Safe to run again.
 -- Players (anon key) may only read the table and call submit_score(); the function keeps
--- the table at 5 rows by deleting every record outside the top 5 in the same transaction.
+-- the table at 10 rows by deleting every record outside the top 10 in the same transaction.
 
 create table if not exists public.code_quest_top5 (
   id bigint generated always as identity primary key,
@@ -41,7 +41,7 @@ begin
     raise exception 'invalid players';
   end if;
 
-  -- Serialize submissions so two classes finishing at once cannot leave more than 5 rows.
+  -- Serialize submissions so two classes finishing at once cannot leave more than 10 rows.
   lock table public.code_quest_top5 in share row exclusive mode;
 
   insert into public.code_quest_top5 (name, score, players)
@@ -50,7 +50,7 @@ begin
 
   delete from public.code_quest_top5
   where id not in (
-    select id from public.code_quest_top5 order by score desc, created_at asc limit 5
+    select id from public.code_quest_top5 order by score desc, created_at asc limit 10
   );
 
   return json_build_object(
@@ -61,7 +61,7 @@ begin
         select id, name, score, players
         from public.code_quest_top5
         order by score desc, created_at asc
-        limit 5
+        limit 10
       ) t
     ), '[]'::json)
   );

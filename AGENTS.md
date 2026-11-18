@@ -1922,3 +1922,9 @@ This is the latest handoff and supersedes earlier statements that changes are lo
 - Cache version `20261117-titletop5` on index→main. 65 checks pass (leaderboard check now also covers the title read and list). Headless Chrome screenshots at 1366×768, 1280×720, 1024×600 with mocked data: no overlap/overflow, no page errors.
 - Follow-up (same day): added ↻ refresh button (`#title-leaderboard-refresh`, top-right, disabled while loading) that re-runs `showTitleLeaderboard()`; status text now “게임을 클리어하고 기록에 도전!”; panel widened to 290px with larger rows/fonts for long 2P names (210px at ≤900px/≤700px tall), start panel basis 720px. Cache `20261117-titletop5b`. 65 checks pass (refresh covered).
 - Hall-of-fame long names now wrap (full name visible) instead of ellipsis. Added `?v=` cache query to the ui.css link in index.html (`20261117-titletop5c`) because browsers kept the old stylesheet; bump it whenever ui.css changes.
+
+# 86. v1.7.0 TOP 10 hall of fame (2026-11-18)
+
+- User asked for the hall of fame to show ranks 1–10. Client reads `limit=10`; `code_quest_submit_score()` now keeps/returns the top 10 (deletes 11th and below). Table name `code_quest_top5` kept to avoid a migration; only the function was re-created in the Supabase SQL Editor. Existing rows were already capped at 5, so ranks 6–10 fill in with new clears.
+- UI labels/status text say TOP 10. Title-screen rows compacted (padding 4px, gap 3px, 12px font; 2px/10px at ≤900px/≤700px tall) and the aside scrolls vertically if a screen is still too short.
+- Cache version `20261118-top10` (index→ui.css, index→main, main→leaderboard). 65 checks pass.

@@ -1,6 +1,6 @@
-// Shared TOP 5 leaderboard (v1.5.0) stored in Supabase.
-// The database keeps at most 5 rows: the code_quest_submit_score() SQL function inserts a record and
-// immediately deletes everything outside the top 5 (see supabase/code-quest-top5.sql).
+// Shared TOP 10 leaderboard (v1.7.0; was TOP 5 in v1.5.0) stored in Supabase.
+// The database keeps at most 10 rows: the code_quest_submit_score() SQL function inserts a record and
+// immediately deletes everything outside the top 10 (see supabase/code-quest-top5.sql).
 // Players can only call that function and read the table; they cannot edit or delete rows.
 // Network is used only on the final CLEAR screen, never during gameplay.
 import { LEADERBOARD } from '../core/config.js?v=20261116-top5';
@@ -26,11 +26,11 @@ async function request(path, options = {}) {
   } finally { clearTimeout(timer); }
 }
 
-// Returns { id, top:[{ id, name, score, players }] } — id is the new row (null if it did not make the top 5).
+// Returns { id, top:[{ id, name, score, players }] } — id is the new row (null if it did not make the top 10).
 export async function submitScore(name, score, players) {
   return request('rpc/code_quest_submit_score', { method:'POST', body:JSON.stringify({ p_name:name, p_score:Math.round(score), p_players:players }) });
 }
 
 export async function fetchTop() {
-  return request('code_quest_top5?select=id,name,score,players&order=score.desc,created_at.asc&limit=5');
+  return request('code_quest_top5?select=id,name,score,players&order=score.desc,created_at.asc&limit=10');
 }
