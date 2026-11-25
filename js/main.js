@@ -1,10 +1,10 @@
 import { Assets, ESSENTIAL_ASSETS, LATER_ASSETS } from './core/assets.js';
 import { Input } from './core/input.js';
 import { Renderer } from './core/renderer.js?v=20261116-heroes';
-import { Game } from './core/game.js?v=20261125-noboard';
+import { Game } from './core/game.js?v=20261125-boardon';
 import { QuizSystem } from './systems/quiz.js?v=20261116-speed3';
 import { NICKNAME_MAX_LENGTH, CLASSES, QUIZ_SCORE } from './core/config.js';
-import { leaderboardEnabled, recordName, submitScore, fetchTop } from './systems/leaderboard.js?v=20261125-noboard';
+import { leaderboardEnabled, recordName, submitScore, fetchTop } from './systems/leaderboard.js?v=20261125-boardon';
 
 async function initialize() {
   const ids = ['game','start-screen','start-button','loading-message','ready-screen','ready-start-button','ready-back-button','pause-screen','pause-button','resume-button','home-button','hud','p1-hp','p2-hp','stage-number','stage-name','result-screen','result-eyebrow','result-title','result-message','result-button'];

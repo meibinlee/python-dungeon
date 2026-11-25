@@ -3,7 +3,7 @@
 // immediately deletes everything outside the top 10 (see supabase/code-quest-top5.sql).
 // Players can only call that function and read the table; they cannot edit or delete rows.
 // Network is used only on the final CLEAR screen, never during gameplay.
-import { LEADERBOARD } from '../core/config.js?v=20261125-noboard';
+import { LEADERBOARD } from '../core/config.js?v=20261125-boardon';
 
 const TIMEOUT_MS = 6000;
 

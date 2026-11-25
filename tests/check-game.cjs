@@ -440,7 +440,7 @@ const pythonCheck=spawnSync('python3',[path.join(root,'tests/check-questions.py'
    appGame.returnToStart();elements['mode-2p'].click();assert.equal(elements['p2-card'].hidden,false);assert.equal(elements['game-shell'].classList.contains('solo'),false);
    elements['start-button'].click();assert.match(elements['loading-message'].textContent,/PLAYER 2/);elements['p2-nickname'].value='코코';elements['start-button'].click();elements['ready-start-button'].click();assert.equal(appGame.players.length,2);
  });
- await checkAsync('leaderboard disabled in committed config (no Supabase key shipped); code still correct if re-enabled: hidden without config, submits nickname1/nickname2 once at CLEAR, highlights new record, survives failures',async()=>{
+ await checkAsync('shared TOP 10: title-screen read + list, hidden without config, submits nickname1/nickname2 once at CLEAR, highlights new record, survives failures',async()=>{
    const board=await load('js/systems/leaderboard.js');
    const saved={...config.LEADERBOARD};config.LEADERBOARD.url='';config.LEADERBOARD.key='';
    assert.equal(board.recordName([{nickname:'루나'},{nickname:'코코'}]),'루나/코코');assert.equal(board.recordName([{nickname:'솔로'}]),'솔로');
@@ -458,7 +458,7 @@ const pythonCheck=spawnSync('python3',[path.join(root,'tests/check-questions.py'
    context.fetch=async()=>{throw new Error('offline');};clear();for(let i=0;i<5;i++)await new Promise(r=>setImmediate(r));
    assert.match(elements['leaderboard-status'].textContent,/연결할 수 없어요/);assert.equal(appGame.state,'GAME_CLEAR');
    Object.assign(config.LEADERBOARD,saved);appGame.returnToStart();
-   assert.ok(!saved.url&&!saved.key,'leaderboard stays disabled in the committed config — no Supabase key is shipped to the browser');
+   assert.ok(saved.url.startsWith('https://')&&saved.url.endsWith('.supabase.co'));assert.ok(saved.key.startsWith('sb_publishable_'),'only the public publishable key may be in the repo');
  });
  console.log(`\n${checks} checks passed. No runtime exceptions.`);
 })().catch(error=>{console.error(error);process.exitCode=1;});
