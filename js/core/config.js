@@ -59,7 +59,9 @@ export const DEMON_BONUS = { first:500, decrement:100, minimum:100 };
 export const DEMON = { name:'PYTHON 마왕', hp:360, speed:125, damage:2, tint:'#c65378', chargeInterval:2.4, chargeSpeed:520, windup:0.65, chargeTime:0.6, restTime:1.4, regenDelay:0.5, regenPerSecond:6 };
 export const ULTIMATE = { cooldown:8, damage:36, speed:720, range:1100, size:36, explosionTime:0.35, radius:72, maxEffects:8 };
 
-// Shared TOP 5 leaderboard (Supabase). Fill in the project URL and the public anon/publishable key.
-// Both are public by design; writes are limited to the code_quest_submit_score() SQL function.
-// Leave empty to hide the leaderboard (the game works the same without it).
-export const LEADERBOARD = { url:'https://eonmuncyohtcimpnqvou.supabase.co', key:'sb_publishable_RK_xH6HcnfNTHeGF4IdMGw_esZpNcHB' };
+// Shared leaderboard (Supabase) — DISABLED. Scores are computed in the browser, so a public
+// leaderboard can be fed forged scores through its submit function; that cannot be fully prevented
+// in a no-backend game, so the feature is turned off. With url/key empty, both the title-screen
+// hall of fame and the CLEAR-screen board are hidden and no network request is made.
+// To re-enable later, also re-check RLS on every table in the Supabase project before exposing a key.
+export const LEADERBOARD = { url:'', key:'' };
